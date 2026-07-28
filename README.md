@@ -11,6 +11,7 @@
 - 必须纯协议交付
 - 先恢复真实动态状态，再谈分页、并发和规模化
 - 浏览器只能用于侦察，不能成为最终依赖
+- 最终 collector 优先使用 Python，仅在必要时保留极小 JS、WASM 或本地 bootstrap helper
 
 ## 核心定位
 
@@ -21,25 +22,30 @@
 - 请求能发出去，但响应还要经过解码、解密、字形映射、JSONP 拆包或二进制解析
 - 页面能打开，但协议重放不稳定，表现为 `403`、`412`、`429`、偶发成功、只成功第一页或只在某条路由成功
 - Cookie、挑战脚本、WASM、WebSocket 会话、协议包裹和响应侧解码缠在一起，无法只靠“找 sign”解决
+- 看起来是浏览器专属逻辑，但实际可在本地运行时、局部 helper 或纯 Python 中恢复关键状态
 
 一句话概括：
 
 > 它是一套把 hostile web client 还原成 stable protocol collector 的方法论与执行框架。
 
-## 4.0 的重点升级
+## 5.0 的重点升级
 
-`Spider King 4.0` 不是一次简单的文档修订，而是一次面向复杂目标的能力升级。相比旧版，4.0 把关注点从“参数还原”进一步扩展到“挑战链路治理”和“协议诊断”。
+`Spider King 5.0` 不是脚本层面的功能更新，而是一次方法论和知识库结构升级。它把 4.0 中集中在 `SKILL.md` 里的大量经验拆分为可路由、可维护、可复用的参考模块，让主技能文件更轻，目标分流更清楚，复杂失败排查更稳定。
 
 本次升级重点包括：
 
-- 新增 `transport-gated` 判定：当 TLS、ALPN、UA、HTTP 版本或路由局部准入先把基线请求拦住时，先解决传输门槛，而不是误判为签名问题
-- 强化 challenge-family 目标处理：区分传输层、引导层、状态层、业务层到底是谁在拦截
-- 明确“服务端签发状态”与“本地伪动态字段”的区别：不是所有长得像 token、pageId、traceId 的字段都值得深挖
-- 将分页路由漂移提升为正式协议面：后续页可能切换到不同 endpoint family，不能只靠页码猜 URL
-- 引入嵌入式运行时作为局部恢复工具：当 host-bound JS 需要定时器、cookie、XHR 语义时，可以用本地运行时辅助恢复，但最终仍然必须纯协议交付
-- 增补挑战产物提取、挑战态信封、传输前置门槛、分页路由切换等 playbook，使复杂场景有可复用的处理路径
+- 重构 `SKILL.md`：从大型知识文档调整为精简的执行入口和 reference router
+- 新增知识模块路由：通过 `doctrine-index`、`symptom-heuristics`、`pattern-atlas` 快速判断目标家族和第一步动作
+- 新增反模式库：把“临时浏览器采集器”“硬编码旋转 Cookie”“一次成功就扩展”“helper 加载成功就误判完成”等常见错误路径显式化
+- 新增升级阶梯：在扩大运行时、patch surface 或 transport profile 前，先记录当前证据、失败点和最小诚实升级路径
+- 强化 embedded runtime / iv8 指南：明确什么时候使用本地运行时，什么时候退出运行时，什么时候只能称为 browser-free 而不是 runtime-free
+- 强化最小可验证事实沉淀：对可能复用的目标家族，保留 5 到 15 个结构化事实，而不是只写一次性经验总结
+- 大幅扩展官方自测套件：覆盖 bootstrap 链、cookie provenance、session admission、iv8、本地 helper 完整性、hook 误判、分页路由漂移、rate limit 伪装等场景
+- 保持交付边界不变：最终答案仍然必须是纯协议路径，禁止把 Playwright、Selenium、CDP 页面驱动或浏览器 profile 当作最终方案
 
-这意味着 4.0 更适合处理“看起来浏览器专属”的目标，也更适合长期维护型采集工程，而不是一次性重放脚本。
+5.0 的核心变化可以概括为：
+
+> `SKILL.md` 负责执行和路由，`references/` 负责沉淀知识，`scripts/` 负责缩短重复劳动。
 
 ## 核心能力
 
@@ -54,6 +60,7 @@
 - 环境差异分析：识别标准函数被补丁化、本地输出与浏览器输出不一致、native surface 缺失等问题
 - 挑战与引导链恢复：处理服务端返回 JS、bootstrap challenge、cookie 注入、预热请求与挑战产物提取
 - 状态流恢复：处理登录、配对、心跳、ack、会话密钥、消息帧和媒体派生密钥
+- 运行时边界控制：区分 pure Python、Python + tiny JS helper、Python + WASM helper、Python + local embedded runtime
 - Python-first 交付：最终采集器优先使用 Python，仅在必要时保留极小 JS/WASM/helper/runtime
 
 ## 这套 Skill 不做什么
@@ -63,8 +70,10 @@
 - 用 Playwright、Selenium、CDP 驱动页面作为最终交付
 - 依赖浏览器 profile、手工登录状态、手工点击或隐藏页面上下文
 - 用页面内 `fetch` 代替真实协议恢复
+- 把浏览器自动化包装成“临时 collector”或“可靠 fallback”
 - 只做一次幸运重放，不验证重复性
 - 把一次性 Cookie、挑战结果或临时 token 直接硬编码进最终代码
+- helper 能加载、异常变少或输出长得像，就直接判定协议恢复完成
 
 这不是一个浏览器自动化 Skill。
 
@@ -103,7 +112,7 @@
 
 - `transport-gated`
 
-这一步的意义不是写模板，而是尽早判断这到底是哪种问题，避免一上来就钻进大 bundle 或把页面环境弄脏。
+这一步的意义不是写模板，而是尽早判断这到底是哪种问题，避免一上来就钻进大 bundle、污染浏览器状态或把传输准入误判成签名错误。
 
 ### 2. 轻量双工具侦察
 
@@ -112,8 +121,9 @@
 - `chrome-devtools`：负责页面状态、跳转链、首轮网络视图和可见流程
 - `js-reverse`：负责 initiator、源码搜索、wrapper 追踪和 mutation 假设
 
-这里强调的是“轻量”。  
-也就是说，fresh target 必须双工具起手，但不代表一开始就要做重 Hook、重断点或侵入式页面操作。
+这里强调的是“轻量”。
+
+fresh target 必须双工具起手，但不代表一开始就要做重 Hook、重断点或侵入式页面操作。先证明真实请求路径和最小动态状态，再决定是否进入更重的运行时或 patch 层。
 
 ### 3. 识别真实动态状态
 
@@ -132,6 +142,7 @@
 - 响应侧解码链
 - 会话绑定状态
 - 环境绑定的 challenge artifact
+- transport envelope、operation name、message type 或二进制帧状态
 
 ### 4. 离线重建
 
@@ -141,12 +152,14 @@
 2. Python + 极小 JS helper
 3. Python + 极小 WASM helper
 4. Python + 本地 embedded runtime 或 bootstrap executor
+5. 继续逆向，而不是退回浏览器自动化
 
 最终目标始终不变：
 
 - 不依赖浏览器
 - 不依赖手工动作
 - 不依赖隐藏页面上下文
+- 动态状态可解释、可验证、可再生
 
 ### 5. 重复性验证
 
@@ -158,10 +171,29 @@
 - 分页或 cursor 能正确推进
 - 关键动态状态能正确再生
 - 页面特例、权限边界、会话边界和异常路由被明确记录
+- helper 或 decoder 经过固定输入验证
+- 最终 collector 不依赖浏览器自动化或浏览器 profile
 
-## 4.0 新增的复杂场景处理能力
+## 5.0 新增知识模块
 
-4.0 相比旧版，明确补强了以下高复杂度场景：
+5.0 最大的结构变化是把主知识库拆成更清晰的 reference 模块。
+
+新增模块包括：
+
+- `references/doctrine-index.md`：通用逆向原则索引，沉淀跨目标可复用的协议判断规则
+- `references/symptom-heuristics.md`：症状到目标家族的快速匹配表，用于 fresh target 的早期分流
+- `references/pattern-atlas.md`：高频目标模式图谱，给出每类模式的典型症状和最短第一步
+- `references/anti-patterns-playbook.md`：常见错误路径和反模式，用于阻止浏览器自动化、硬编码、幸运重放等伪完成
+- `references/escalation-ladder-playbook.md`：逐级升级决策梯，约束 runtime、patch surface、transport profile 的升级顺序
+- `references/iv8-runtime-cheatsheet.md`：iv8 / embedded runtime 使用速查，明确本地运行时的最小使用边界
+- `references/minimal-verifiable-facts-playbook.md`：最小可验证事实沉淀规范，用于复用目标家族经验
+- `references/skill-maintenance.md`：技能维护与升级规范，防止新经验退化成站点 folklore
+
+这些模块让 5.0 的工作方式更像一个可维护的协议恢复知识库，而不是一份越来越长的单文件说明。
+
+## 复杂场景处理能力
+
+5.0 延续并补强了 4.0 中面向复杂目标的能力，尤其强调以下场景不能被粗暴归因为“浏览器专属”：
 
 - 传输前置门槛：请求在应用层之前就被 TLS、ALPN、HTTP 版本或 UA 策略拦截
 - Challenge artifact harvest：挑战运行时已经暴露 getter，或已经自发出了决定性 XHR/fetch
@@ -170,8 +202,9 @@
 - Pagination route pivot：前几页与后几页可能走不同 endpoint family，甚至从静态页切到 `/ui` 或 Ajax
 - Raw source beats parsed DOM：某些回放关键路由必须以原始 HTML 片段为准，不能只信 DOM 解析值
 - Enumeration vs hydration：列表枚举与详情补全应拆成两个阶段，不要把高成本详情强耦合进唯一采集路径
-
-这些能力让 `Spider King` 更适合处理“复杂但可恢复”的目标，而不是被动退回浏览器自动化。
+- Browser-free vs runtime-free：本地 embedded runtime 可以是合理中间交付，但必须明确它是否仍然是运行时依赖
+- Session admission：登录、bootstrap 成功或 current-user 成功，不等于业务路由已经获得准入
+- Cookie provenance：旋转 Cookie 必须证明写入者、刷新路径、作用 slot 和会话链完整性，不能直接硬编码
 
 ## 目录结构
 
@@ -189,6 +222,14 @@ spider-king/
 │   ├── protocol_diff.py
 │   └── scaffold_reverse_project.py
 └── references/
+    ├── doctrine-index.md
+    ├── symptom-heuristics.md
+    ├── pattern-atlas.md
+    ├── anti-patterns-playbook.md
+    ├── escalation-ladder-playbook.md
+    ├── iv8-runtime-cheatsheet.md
+    ├── minimal-verifiable-facts-playbook.md
+    ├── skill-maintenance.md
     ├── workflow-overview.md
     ├── startup-triage-playbook.md
     ├── tool-playbook.md
@@ -210,8 +251,8 @@ spider-king/
 
 其中：
 
-- `SKILL.md` 是主技能定义文件，也是最高优先级规则入口
-- `references/` 是按症状路由的通用参考手册
+- `SKILL.md` 是主技能定义文件，5.0 中更偏向执行入口和 reference router
+- `references/` 是按症状、模式和失败面拆分的通用参考手册
 - `scripts/` 是高频辅助脚本，用来缩短重复劳动
 - `agents/openai.yaml` 用于技能代理配置
 
@@ -222,14 +263,18 @@ spider-king/
 1. `SKILL.md`
 2. `references/workflow-overview.md`
 3. `references/startup-triage-playbook.md`
-4. `references/tool-playbook.md`
-5. `references/official-self-test-task-suite.md`
+4. `references/doctrine-index.md`
+5. `references/pattern-atlas.md`
+6. `references/official-self-test-task-suite.md`
 
 按场景继续深入时，再按症状跳转：
 
+- 目标症状还很宽：`symptom-heuristics.md`
+- 需要快速匹配常见模式：`pattern-atlas.md`
 - 参数不一致、wrapper 重写：`transport-wrapper-playbook.md`
 - 标准函数被补丁：`patched-helper-playbook.md`
 - 浏览器输出与本地输出不一致：`env-diff-playbook.md`
+- 本地环境 patch 与 native surface：`environment-patch-playbook.md`
 - JSVMP 或重混淆：`jsvmp-analysis-playbook.md`
 - 服务端返回 JS 写 Cookie：`server-js-cookie-bootstrap-playbook.md`
 - 响应需要本地解码：`response-decode-playbook.md`
@@ -239,6 +284,11 @@ spider-king/
 - 入口 HTML 和 challenge JS 共同种状态：`challenge-state-envelope-playbook.md`
 - 后续页切换路由家族：`pagination-route-pivot-playbook.md`
 - host-bound JS 需要本地 runtime：`embedded-browser-runtime-playbook.md`
+- iv8 / embedded runtime 速查：`iv8-runtime-cheatsheet.md`
+- 出现伪完成或捷径诱惑：`anti-patterns-playbook.md`
+- 不确定该不该升级分析层：`escalation-ladder-playbook.md`
+- 需要沉淀可复用经验：`minimal-verifiable-facts-playbook.md`
+- 修改 Skill 本身：`skill-maintenance.md`
 
 ## 辅助脚本说明
 
@@ -290,9 +340,10 @@ git clone <your-repo-url> ~/.codex/skills/spider-king
 
 - 已拿到目标页面 URL、接口 URL、请求样本、Cookie 样本或 JS 片段
 - 明确需要恢复参数、协议包裹、响应解码或状态流
-- 目标存在 challenge、bootstrap、动态 cookie、WebSocket、GraphQL、protobuf、WASM 或环境绑定逻辑
+- 目标存在 challenge、bootstrap、动态 Cookie、WebSocket、GraphQL、protobuf、WASM 或环境绑定逻辑
 - 最终目标是可复现、可长期维护的协议采集器
 - 需要将签名、bootstrap、challenge state 或 decode 逻辑真正落到 Python 或本地 helper 中
+- 需要从多个失败面中判断真正门槛：transport、session、verifier、decode、wrapper 或 runtime
 
 ## 不适用场景
 
@@ -301,6 +352,7 @@ git clone <your-repo-url> ~/.codex/skills/spider-king
 - 需求本质只是标准 UI 自动化
 - 目标本身没有公开协议恢复价值，只是简单页面录制
 - 最终交付允许长期依赖浏览器 profile、人工点击或人工登录维持
+- 只要求一次性浏览器脚本，不关心协议可复现性
 - 不具备合法授权边界，不适合进入实际协议恢复流程
 
 ## 交付标准
@@ -309,10 +361,12 @@ git clone <your-repo-url> ~/.codex/skills/spider-king
 
 - 真实接口路径说明
 - 动态状态分类结论
+- `chrome-devtools` 与 `js-reverse` 的关键证据
 - 关键固定输入/输出验证样本
 - Python collector
 - 必要时的极小 JS / WASM / runtime helper
 - 原始请求/响应样本
+- Cookie、session、challenge artifact 的来源说明
 - 风险与不稳定点说明
 
 合格交付至少满足：
@@ -322,21 +376,27 @@ git clone <your-repo-url> ~/.codex/skills/spider-king
 - 重放逻辑可重复成功
 - 关键动态状态可解释、可验证、可再生
 - 如果存在 challenge 或 transport pre-gate，已明确记录真正门槛发生在哪一层
+- 如果仍保留 embedded runtime，必须明确说明当前结果是 browser-free 还是 runtime-free
 
 ## 自检与防漂移
 
-这个仓库已经开始把“技能回归检查”纳入设计：
+5.0 把“技能回归检查”和“经验沉淀规则”提升为正式维护内容：
 
 - `references/official-self-test-task-suite.md` 用于验证主路线是否仍然 protocol-first
+- `references/skill-maintenance.md` 用于约束后续经验如何沉淀
+- `references/anti-patterns-playbook.md` 用于识别常见伪完成路径
+- `references/escalation-ladder-playbook.md` 用于避免在证据不足时跳到更重运行时或更宽 patch
+- `references/minimal-verifiable-facts-playbook.md` 用于保存可复用、可复验的结构事实
 - `Startup Gate` 用于确保 fresh target 不会一上来就乱钻
 - `tool-playbook.md` 强调只使用当前真实可用的 MCP 能力
-- 4.0 额外强调 transport pre-gate、challenge artifact、分页漂移和 shared envelope family 等复杂场景不能被遗漏
 
 后续如果继续演进这个仓库，建议始终一起维护三类内容：
 
 - 主技能规则
 - 参考手册路由
 - 自测任务与回归标准
+
+新增经验时，优先抽象成通用模式、症状、失败面或交付规则，不要把站点特例沉淀成不可迁移的 folklore。
 
 ## 一句话总结
 
