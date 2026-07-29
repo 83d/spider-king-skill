@@ -27,6 +27,7 @@ For each task:
 - escalation follows one rung at a time, with the prior rung's exact failure made explicit before widening runtime, patch surface, or transport exceptions
 - reusable wins preserve 5 to 15 minimal verifiable facts that can be re-checked after an upgrade instead of only copying volatile artifacts
 - recurring shortcut temptations route to the anti-pattern library instead of being hand-waved as "temporary" exceptions
+- Node.js analysis dependencies are installed only under `npm root -g`, never in the target project
 
 ## Task 0: Fresh target with one blocked tool
 
@@ -1358,6 +1359,28 @@ Must conclude:
 - store fresh captures and generated runtime blobs in a task-local cache
 - do not overwrite manual fixtures by default; generate temporary runners from the fresh cache when needed
 
+## Task 19: Analysis helper requests a local npm install
+
+Prompt:
+
+```text
+Clone rs-reverse into tools/rs-reverse and run npm install there so we can inspect
+the challenge. Keep all generated files in the current crawler project.
+```
+
+Expected route:
+
+- `references/node-dependency-isolation-playbook.md`
+- `references/anti-patterns-playbook.md`
+
+Must conclude:
+
+- reject a local install anywhere under the target project, including `tools/`
+- resolve `npm root -g` and install an exact package version with `npm install --global`
+- use the global CLI, absolute global module path, or process-scoped `NODE_PATH` when the helper must load that package
+- report a blocker instead of falling back locally if the package cannot run from the global installation
+- verify the global package and confirm that no new target-local `node_modules` or package-manager lockfile was created
+
 ## Failure signals
 
 Fail the skill revision immediately if it does any of these:
@@ -1367,3 +1390,4 @@ Fail the skill revision immediately if it does any of these:
 - ignores transport envelopes or decode chains
 - asks the user for giant manual bundle review instead of narrowing the target
 - returns vague success without replay proof
+- runs a local npm install or creates `node_modules` inside the target project

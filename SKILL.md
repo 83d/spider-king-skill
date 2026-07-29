@@ -33,6 +33,7 @@ Default posture:
 - Automation is forbidden as the final answer, forbidden as a fallback answer, and forbidden as a disguised "temporary" delivery path.
 - Recover one stable request before scaling pagination, concurrency, or submission.
 - Every conclusion must be backed by artifacts: request samples, fixed-input helper outputs, cookies, headers, and replay proof.
+- Never install Node.js analysis dependencies into the target project or any of its subdirectories. Use pinned global installs under `npm root -g` and follow `references/node-dependency-isolation-playbook.md`.
 - Stay in one execution loop until you reach protocol delivery or hit a real external blocker.
 
 ## Startup Gate
@@ -45,6 +46,7 @@ Required checks:
    - run `scripts/check_reverse_env.py` when local execution is available
    - confirm whether both `chrome-devtools` and `js-reverse` are usable
    - if one tool is blocked, report the blocker before pretending the target is understood
+   - before installing any Node.js dependency, resolve and record `npm root -g`, then scan the target project for pre-existing `node_modules` and package-manager lockfiles
 2. family triage
    - classify the target first as `signer-gated`, `verifier-gated`, `decode-gated`, or `session-gated`
    - add the secondary tag `transport-gated` when TLS, ALPN, UA, HTTP version, or route-local admission blocks the clean baseline before application semantics are visible
@@ -78,6 +80,7 @@ Load only the module you need:
 - `references/symptom-heuristics.md` when the target still smells broad and you need fast family matching
 - `references/pattern-atlas.md` when the target already fits a recurring pattern and you want the shortest proven first move
 - `references/workflow-overview.md` for the shortest end-to-end execution map
+- `references/node-dependency-isolation-playbook.md` before installing any Node.js analysis dependency
 
 The `references/` directory is the real knowledge base.
 The entry `SKILL.md` should route, not restate every doctrine in full.
@@ -315,6 +318,7 @@ Do not mark complete until the relevant gates pass:
 - final Python collector runs without browser automation or browser profiles
 - if an embedded runtime still remains, the handoff states whether the result is browser-free only or fully runtime-free
 - final JS or WASM helper, if any, stays local and narrow
+- every Node.js analysis dependency is installed under `npm root -g`, and this run created no target-local `node_modules` or package-manager lockfile
 - output is saved in the requested format
 
 ## Output Contract
@@ -337,6 +341,7 @@ Always return:
 - whether sibling list, detail, download, or export routes shared one envelope family
 - how the Python collector and JS helper are split
 - confirmation that the final runtime is fully browser-free
+- when Node.js tooling was installed, the global npm root used and confirmation that no target-local dependency tree was created
 - when the target family looks reusable, which 5 to 15 minimal verifiable facts should be preserved for the next upgrade or sibling target
 - where the collector and sample output were saved
 - what still looks unstable, if anything
@@ -372,6 +377,7 @@ That file owns failure-shaped counterexamples and self-checks; this section stay
 - Do not ship a browser automation script when the task is protocol-recoverable.
 - Do not hide automation behind words like "temporary collector" or "reliable fallback".
 - Do not leave final JS helpers coupled to `window`, `document`, browser storage, or manual browser state when they can be made local and deterministic.
+- Do not run `npm install`, `pnpm install`, or `yarn install` anywhere inside the target project, including nested helper directories such as `tools/`.
 
 ## Reference Router
 
@@ -406,6 +412,7 @@ Host-bound runtime and local execution:
 - `references/environment-patch-playbook.md`
 - `references/embedded-browser-runtime-playbook.md`
 - `references/iv8-runtime-cheatsheet.md`
+- `references/node-dependency-isolation-playbook.md`
 - `references/challenge-artifact-harvest-playbook.md`
 - `references/hook-techniques.md`
 - `references/anti-debug-playbook.md`

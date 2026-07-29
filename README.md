@@ -47,6 +47,15 @@
 
 > `SKILL.md` 负责执行和路由，`references/` 负责沉淀知识，`scripts/` 负责缩短重复劳动。
 
+## 83d Fork 定制
+
+本 fork 在上游 5.0 基础上保留一项本地安全约束：
+
+- Node.js 分析依赖只能以固定版本安装到 `npm root -g`
+- 禁止在目标项目及其任意子目录生成 `node_modules` 或包管理器锁文件
+- 安装前后必须扫描目标目录，并保留已有依赖树和锁文件不动
+- 完整规则见 `references/node-dependency-isolation-playbook.md`
+
 ## 核心能力
 
 当前版本围绕 `chrome-devtools` 与 `js-reverse` 两套分析能力展开，强调轻量双工具侦察、离线还原和 Python-first 交付。
@@ -228,6 +237,7 @@ spider-king/
     ├── anti-patterns-playbook.md
     ├── escalation-ladder-playbook.md
     ├── iv8-runtime-cheatsheet.md
+    ├── node-dependency-isolation-playbook.md
     ├── minimal-verifiable-facts-playbook.md
     ├── skill-maintenance.md
     ├── workflow-overview.md
@@ -285,6 +295,7 @@ spider-king/
 - 后续页切换路由家族：`pagination-route-pivot-playbook.md`
 - host-bound JS 需要本地 runtime：`embedded-browser-runtime-playbook.md`
 - iv8 / embedded runtime 速查：`iv8-runtime-cheatsheet.md`
+- 安装 Node.js 分析依赖：`node-dependency-isolation-playbook.md`
 - 出现伪完成或捷径诱惑：`anti-patterns-playbook.md`
 - 不确定该不该升级分析层：`escalation-ladder-playbook.md`
 - 需要沉淀可复用经验：`minimal-verifiable-facts-playbook.md`

@@ -19,6 +19,7 @@ When you notice yourself thinking:
 - "the helper loads now, good enough"
 - "I should jump to a heavier runtime"
 - "I already got page 1 once, let's scale"
+- "I can install this helper under tools/ and clean it up later"
 
 stop and match the temptation below before editing more code.
 
@@ -211,6 +212,33 @@ Smallest honest next move:
 Self-check:
 
 - could you rerun the diff from a clean stable base tomorrow?
+
+## Anti-pattern 9: Install analysis dependencies inside the target project
+
+Temptation:
+
+- run `npm install` inside the target or a nested `tools/` directory
+- use `--prefix`, a workspace, or a copied package tree to keep the helper "near the code"
+- promise to remove the generated `node_modules` or lockfile later
+
+Why it is false progress:
+
+- analysis tooling mutates the artifact being analyzed
+- generated lockfiles and dependency trees obscure later diffs and provenance
+- cleanup can destroy pre-existing user data or leave hidden package state behind
+
+Smallest honest next move:
+
+- resolve `npm root -g`
+- install the exact package version globally
+- load it through `PATH`, its absolute global path, or a process-scoped `NODE_PATH`
+- verify the global package and rescan the target tree
+
+Self-check:
+
+- did this run create any `node_modules` or package-manager lockfile under the target project?
+
+See `references/node-dependency-isolation-playbook.md` for the full installation and reporting contract.
 
 ## Entry format for new anti-patterns
 
