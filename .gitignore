@@ -1,0 +1,15 @@
+﻿# caches / local noise
+.pytest_cache/
+.ruff_cache/
+__pycache__/
+*.py[cod]
+.Python
+.venv/
+venv/
+.env
+.DS_Store
+Thumbs.db
+
+# accidental local test dumps
+tests/_err_*.txt
+tests/_out_*.txt

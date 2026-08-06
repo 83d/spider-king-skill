@@ -1,0 +1,7 @@
+interface:
+  display_name: "Spider King"
+  short_description: "Protocol-first web reversal and Python collector delivery"
+  default_prompt: "Use $spider-king to classify live target, artifact-only, or continuation work, gather sequential paired browser evidence when required, and deliver the smallest protocol-first Python result."
+
+policy:
+  allow_implicit_invocation: true
