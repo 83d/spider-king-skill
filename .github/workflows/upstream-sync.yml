@@ -192,32 +192,26 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
-      issues: write
+      contents: read
     steps:
-      - name: Open, update, or close the sync alert
+      - name: Summarize sync health
         env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
           VALIDATE_RESULT: ${{ needs.validate-upstream.result }}
           PUBLISH_RESULT: ${{ needs.publish.result }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         shell: bash
         run: |
           set -euo pipefail
-          title="Upstream sync needs attention"
-          issue_number="$(gh issue list --state open --search "${title} in:title" --json number,title --jq ".[] | select(.title == \"${title}\") | .number" | head -n1)"
-
+          {
+            echo "## Sync health"
+            echo
+            echo "- Validation: \`${VALIDATE_RESULT}\`"
+            echo "- Publication: \`${PUBLISH_RESULT}\`"
+            echo "- Run: ${RUN_URL}"
+          } >> "${GITHUB_STEP_SUMMARY}"
           if [[ "${VALIDATE_RESULT}" == "success" && "${PUBLISH_RESULT}" == "success" ]]; then
-            if [[ -n "${issue_number}" ]]; then
-              gh issue comment "${issue_number}" --body "The upstream sync recovered successfully: ${RUN_URL}"
-              gh issue close "${issue_number}" --reason completed
-            fi
+            echo "GitHub-hosted upstream sync is healthy."
             exit 0
           fi
-
-          body="The GitHub-hosted upstream sync stopped at a safety gate. Validation: ${VALIDATE_RESULT}; publication: ${PUBLISH_RESULT}. Inspect the run before changing the overlay or accepting upstream semantics: ${RUN_URL}"
-          if [[ -n "${issue_number}" ]]; then
-            gh issue comment "${issue_number}" --body "${body}"
-          else
-            gh issue create --title "${title}" --body "${body}"
-          fi
+          echo "::error title=Upstream sync needs attention::A safety gate stopped the sync. Inspect ${RUN_URL} before changing the overlay or accepting new upstream semantics."
+          exit 1
