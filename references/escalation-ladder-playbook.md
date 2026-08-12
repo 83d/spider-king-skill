@@ -9,6 +9,15 @@ The goal is to keep reverse work honest:
 - record why the previous rung was insufficient
 - stop before browser automation silently becomes the delivery path
 
+## Contents
+
+- [Core rule](#core-rule)
+- [Universal ladder](#universal-ladder)
+- [Promotion cues](#promotion-cues)
+- [Bad jumps](#bad-jumps)
+- [Ladder log](#ladder-log)
+- [Final rule](#final-rule)
+
 ## Core rule
 
 Do not jump multiple rungs.

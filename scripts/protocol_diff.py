@@ -12,25 +12,45 @@ import sys
 from pathlib import Path
 from typing import Any
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from _bounded_input import BoundedInputError, read_utf8_text, validate_json_shape  # noqa: E402
+
 
 def load_text(path: Path) -> str:
-    return path.read_text(encoding="utf-8-sig")
+    return read_utf8_text(path)
 
 
 def try_load_json(text: str) -> Any | None:
     try:
-        return json.loads(text)
+        value = json.loads(text)
     except json.JSONDecodeError:
         return None
+    except RecursionError as exc:
+        raise BoundedInputError("JSON nesting exceeds the supported limit") from exc
+    validate_json_shape(value, label="sample")
+    return value
+
+
+def key_path(prefix: str, key: str) -> str:
+    if key.isidentifier():
+        return f"{prefix}.{key}"
+    return f"{prefix}[{json.dumps(key, ensure_ascii=False)}]"
 
 
 def flatten_json(value: Any, prefix: str = "$") -> dict[str, str]:
     rows: dict[str, str] = {}
     if isinstance(value, dict):
+        if not value:
+            rows[prefix] = "{}"
         for key in sorted(value):
-            rows.update(flatten_json(value[key], f"{prefix}.{key}"))
+            rows.update(flatten_json(value[key], key_path(prefix, key)))
         return rows
     if isinstance(value, list):
+        if not value:
+            rows[prefix] = "[]"
         for index, item in enumerate(value):
             rows.update(flatten_json(item, f"{prefix}[{index}]"))
         return rows
@@ -83,30 +103,38 @@ def compare_text(left_text: str, right_text: str, max_diffs: int) -> None:
         print(safe)
 
 
-def main() -> None:
+def main() -> int:
     parser = argparse.ArgumentParser(description="Compare two captured protocol samples.")
     parser.add_argument("left", help="Left sample path")
     parser.add_argument("right", help="Right sample path")
     parser.add_argument("--max-diffs", type=int, default=40, help="Maximum diff rows to print")
     args = parser.parse_args()
 
+    if args.max_diffs < 1:
+        parser.error("--max-diffs must be greater than zero")
+
     left_path = Path(args.left)
     right_path = Path(args.right)
 
-    left_text = load_text(left_path)
-    right_text = load_text(right_path)
-    left_json = try_load_json(left_text)
-    right_json = try_load_json(right_text)
+    try:
+        left_text = load_text(left_path)
+        right_text = load_text(right_path)
+        left_json = try_load_json(left_text)
+        right_json = try_load_json(right_text)
+    except BoundedInputError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
 
     print(f"left={left_path}")
     print(f"right={right_path}")
 
     if left_json is not None and right_json is not None:
         compare_json(left_json, right_json, args.max_diffs)
-        return
+        return 0
 
     compare_text(left_text, right_text, args.max_diffs)
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

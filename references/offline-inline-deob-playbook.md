@@ -7,6 +7,17 @@ Use this reference when:
 - a signer depends on a packed payload such as `eval(atob(...))`
 - a standard hash does not match the in-page result even though the function name looks familiar
 - a request parameter contains unusual delimiters or unicode separators
+- an external obfuscator.io-style bundle needs local string-table recovery before the signer is readable
+
+## Contents
+
+- [1. When to stop fighting the live page](#1-when-to-stop-fighting-the-live-page)
+- [2. Extract the page structure first](#2-extract-the-page-structure-first)
+- [3. Inline payload recovery pattern](#3-inline-payload-recovery-pattern)
+- [4. String-table and rotate-IIFE recovery](#4-string-table-and-rotate-iife-recovery)
+- [5. Legacy hash warning](#5-legacy-hash-warning)
+- [6. Unicode delimiter safety](#6-unicode-delimiter-safety)
+- [7. Practical delivery rule](#7-practical-delivery-rule)
 
 ## 1. When to stop fighting the live page
 
@@ -16,6 +27,7 @@ If any of these occur, switch to offline extraction instead of repeatedly poking
 - console floods from anti-debug code
 - MCP evaluation calls time out repeatedly
 - reverse tools disconnect after page load
+- one browser family cannot start because the other already owns the profile directory
 
 Fallback path:
 
@@ -23,6 +35,8 @@ Fallback path:
 2. extract all inline scripts
 3. save relevant external assets
 4. deobfuscate and test locally
+
+If only one browser tool family can own the target, keep that family for wire evidence and finish static recovery offline with Node or Python. Do not invent a second live browser just to satisfy ceremony.
 
 ## 2. Extract the page structure first
 
@@ -60,9 +74,25 @@ Recommended workflow:
 4. base64-decode it to the second-stage source
 5. isolate only the signer or crypto section needed for replay
 
-## 4. Legacy hash warning
+## 4. String-table and rotate-IIFE recovery
 
-Do not assume that `md5`, `sha1`, or similar names mean standard library equivalence.
+Use this when the saved asset is a single-line or string-table-heavy bundle:
+
+1. preserve the raw file bytes before any rewrite
+2. extract the string-array function, decoder function, and rotate IIFE with brace-aware matching that respects escaped quotes
+3. run only that decoder surface locally to dump index-to-string mappings
+4. rewrite in two passes:
+   - expand member-map objects first
+   - replace decoder(hex) call sites second
+5. normalize hex keys: if the dump uses `"c7"`, match source `0xc7` by stripping the `0x` prefix
+6. beautify when line-oriented reading is required; one-line files make naive line numbers useless
+7. stop once the preimage, helper, or wrapper boundary is recoverable
+
+If evaluate-style tool output was written through a JSON-serializing file path, decode the JSON string before treating the file as JavaScript source.
+
+## 5. Legacy hash warning
+
+Do not assume that `md5`, `sha1`, `sm3`, or similar names mean standard library equivalence.
 
 Things to verify:
 
@@ -71,16 +101,17 @@ Things to verify:
 - little-endian vs big-endian assumptions
 - patched constants or altered rounds
 - hex encoding order
+- environment-specific constant tables selected by native-function checks
 
 If the page ships a self-contained hash implementation, preserve that implementation first. Only replace it with a standard library version after proving the outputs match on fixed inputs.
 
-## 5. Unicode delimiter safety
+## 6. Unicode delimiter safety
 
 If a request value contains unusual separators, keep them explicit.
 
 Examples:
 
-- use `\\u4e28` instead of pasting `丨`
+- use `\\u4e28` instead of pasting a display glyph
 - use escaped strings in generated JS and Python output
 - avoid trusting terminal or shell display for correctness
 
@@ -90,7 +121,7 @@ Why this matters:
 - copied values can be silently corrupted by encoding
 - a valid hash plus a broken delimiter still fails server validation
 
-## 6. Practical delivery rule
+## 7. Practical delivery rule
 
 For pages like this, prefer:
 

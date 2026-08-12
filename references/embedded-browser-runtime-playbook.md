@@ -3,8 +3,22 @@
 Use this playbook when host-bound JavaScript needs browser-visible semantics, but the target does not truly require a full browser for every request.
 
 Examples of suitable runtimes include local embedded hosts such as `iv8`.
+In some cases a pinned local JS engine plus a patched VM context is enough before a fuller host such as `iv8`.
 
 If `iv8` becomes the chosen host, then read `references/iv8-runtime-cheatsheet.md` for concrete load-path, timer, resource-injection, and native-surface recipes.
+
+## Contents
+
+- [iv8 selection rule](#iv8-selection-rule)
+- [iv8 exit rule](#iv8-exit-rule)
+- [Browser-free versus runtime-free](#browser-free-versus-runtime-free)
+- [Route here when](#route-here-when)
+- [Do not route here first when](#do-not-route-here-first-when)
+- [Decision ladder](#decision-ladder)
+- [High-value runtime moves](#high-value-runtime-moves)
+- [Evidence to record](#evidence-to-record)
+- [Common traps](#common-traps)
+- [Delivery rule](#delivery-rule)
 
 ## iv8 selection rule
 
@@ -23,6 +37,7 @@ Stop the runtime as soon as one decisive artifact is recovered:
 - cookie string
 - token
 - signed URL
+- navigation target or redirect URL
 - wrapped body
 - decoded payload
 - stable getter
@@ -87,14 +102,18 @@ For the generic "do not jump layers" rule across the whole skill, also read `ref
 
 ## High-value runtime moves
 
+- Before escalating to a heavier host such as `iv8`, test whether a pinned local JS engine plus a patched VM context and the original site bundle already yield the decisive artifact.
 - Use `page.load`-style offline bootstrap when lifecycle events, inline scripts, or XHR hooks matter.
 - Use plain DOM insertion only when you need parsing without script execution.
 - Prefer DOM or script insertion over blocking `vm` evaluation when timers, microtasks, or self-issued XHR or fetch calls must fire.
 - Before escalating to a heavier host, test whether a thin DOM runtime plus a few native-looking patches is enough for parser order, `document.cookie`, and one linked challenge script.
+- Pin the local engine version when native function surfaces, builtin availability, or host-object enumeration differ across versions; record which version ships and which version was used only for diagnostics.
 - Freeze the UA major version when parser budget or event ordering changes behavior.
 - Use logical time to advance timers and queued work without waiting on wall clock time.
 - If entry HTML references linked bootstrap assets or runner scripts, fetch them under the same session, effective origin, and relevant headers that discovered them; detached downloads can fork the bootstrap chain.
+- If the business route itself returns a machine challenge payload, parse the tuple in Python and call the local runtime only for the derived refresh artifact before retrying the same request family.
 - If a bootstrap runtime exposes a stable getter after synchronous init, harvest that artifact before trying to finish every later timer callback.
+- If a thin DOM or embedded runtime emits the final navigation target or same-route redirect URL before full page parity, treat that URL as a first-class artifact and hand replay back to Python immediately.
 - If the runtime records intended network requests locally without sending them, drive it as observe planned request -> send exact HTTP in Python -> inject response -> advance the queue, rather than rebuilding the whole scheduler first.
 - If the chosen host bridge is synchronous, test whether the runtime only consumes already-issued state from `document.cookie`, storage, or one cached object. If so, inject a verified sample and defer full refresh-path reversal until replay evidence says it is necessary.
 - When a local runtime self-issues the decisive request, intercept body and headers locally and return the minimal fake success response needed to keep the runtime moving.
@@ -112,20 +131,25 @@ For the generic "do not jump layers" rule across the whole skill, also read `ref
 - offline resource map or script bundle map
 - environment overrides and omitted defaults
 - structural metrics such as artifact length, field presence, repeated blocks, or entropy changes before and after each patch
+- local engine version
 - UA major version
 - timer mode and every explicit event-loop advance
 - final artifact extracted from the runtime
+- whether the decisive artifact was a cookie delta, a redirect URL, or both
 - fixed-input checks that prove the runtime output matches the live sample
 
 ## Common traps
 
 - using an embedded runtime before trying the trivial Python rewrite
+- using one JS engine version for diagnostics and another for the shipped helper without rerunning fixed-input parity checks
 - feeding the wrong UA version and then blaming crypto for an ordering mismatch
 - using full page bootstrap when plain DOM parsing would do
 - downloading linked bootstrap assets out of band with a different session, origin, or header profile than the entry chain
+- treating a business-response challenge tuple as proof you found the wrong endpoint when the same route may simply need local refresh and retry
 - treating failure under Node, jsdom, or a thin shim as proof the VM cannot run in a closer local engine or embedded host
 - insisting on full async bootstrap replay when the runtime only needs one already-issued cookie, storage value, or token to proceed
 - assuming you need full deobfuscation or a heavier host before testing whether a thin DOM runtime already yields the decisive cookie header for same-URL replay
+- discarding a recovered redirect or navigation target because later runtime notices still appear after the decisive artifact has already been emitted
 - reconstructing callback timing after the authoritative value is already visible in a local response or state write
 - leaving the one fresh success chain to keep patching the host before the smallest live replay path is proven
 - replaying cookies, storage, scripts, and resource maps forever when the real gap is a null or fake native surface such as `canvas`, WebGL, or layout APIs

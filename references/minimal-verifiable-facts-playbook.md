@@ -8,6 +8,17 @@ Record 5 to 15 minimal verifiable facts.
 Less than 5 usually stays too vague.
 More than 15 usually turns back into notes instead of a reusable checkpoint set.
 
+## Contents
+
+- [What a good fact looks like](#what-a-good-fact-looks-like)
+- [What a good fact is not](#what-a-good-fact-is-not)
+- [Fact categories](#fact-categories)
+- [Good versus bad examples](#good-versus-bad-examples)
+- [Capture template](#capture-template)
+- [Upgrade workflow](#upgrade-workflow)
+- [Storage rule](#storage-rule)
+- [Final rule](#final-rule)
+
 ## What a good fact looks like
 
 A good fact is:
@@ -42,6 +53,7 @@ Examples:
 - first response is a challenged document, not the final API
 - the same document URL becomes replayable after local bootstrap
 - one linked challenge asset is required, not the whole bundle tree
+- the business route itself first returns a machine refresh tuple and then succeeds after local regeneration on the same route family
 
 ### Real request facts
 
@@ -66,6 +78,8 @@ Examples:
 - the token is URL-safe Base64 and length stays near 248
 - the response prefix is 8 bytes before the real payload anchor
 - the cookie shape includes a checksum segment or fixed-width splice
+- `document.all.length` changes when one attached element appears or disappears
+- `iframe.contentWindow` exists only while the iframe stays attached
 
 ### Decode and framing facts
 

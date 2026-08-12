@@ -1,26 +1,68 @@
 # Startup Triage Playbook
 
-Use this reference at the start of every fresh target.
+Use this reference at the start of every fresh intake or when a prior gate becomes stale.
 
 The goal is to decide what kind of fight this is before you load giant bundles or poison the page with broad hooks.
 
+## Contents
+
+- [Startup gate](#startup-gate)
+- [Capability-aware evidence roles](#capability-aware-evidence-roles)
+- [Escalation ladder before full browser dependence](#escalation-ladder-before-full-browser-dependence)
+- [Family triage](#family-triage)
+- [Observer-effect rule](#observer-effect-rule)
+- [Continuation sibling scan](#continuation-sibling-scan)
+
 ## Startup gate
 
-Complete these three checks first:
+Complete these four checks first:
 
-1. environment and tool sanity
-   - run `scripts/check_reverse_env.py` when local execution is available
-   - confirm whether both `chrome-devtools` and `js-reverse` are usable
+1. intake mode
+   - choose `live-target` when a current page or endpoint needs fresh wire and runtime evidence
+   - choose `artifact-only` when the input is a saved request, packet capture, source file, JS or WASM sample, token, cookie, or response without a live target requirement
+   - choose `continuation` when the same target, session assumptions, tool registry, and delivery goal remain current
+   - do not claim live acceptance, current endpoint behavior, or runtime provenance from artifact-only evidence
+2. environment and tool sanity
+   - run `scripts/check_reverse_env.py --project-root <project>` when local execution is available; fingerprint only explicitly selected public helper lockfiles with repeatable `--helper-lockfile <path>` arguments
+   - treat project `.venv` coherence as advisory by default; add `--require-project-venv` only when the user or bound project makes that environment a hard gate
+   - for `live-target`, confirm whether both `chrome-devtools` and `js-reverse` are usable through schemas, tool lists, or non-target health surfaces; this capability check must not open the target in both tools
+   - record a capability snapshot: required methods present, optional methods present, selected fallbacks, configured browser mode, and blockers
+   - for `live-target`, do not place both browser tool families in one parallel tool batch
+   - for `live-target`, grant initial `TARGET_ACTIVE` ownership to `chrome-devtools`; defer the first `js-reverse` target action until the Chrome handoff gate in `references/tool-playbook.md` is complete
+   - for `artifact-only`, inspect local runtimes and supplied files first; browsers are not a ceremonial requirement
+   - for `continuation`, reuse the prior capability snapshot unless the registry, browser mode, or target context changed
    - note whether a local embedded runtime such as `iv8` is available when host-bound bootstrap is suspected
    - report blockers early instead of pretending the missing tool does not matter
-2. family triage
+3. family triage
    - choose the first family that explains the failure mode best
    - before loading a family-specific scaffold or playbook, corroborate the family across at least two evidence surfaces such as response shape, cookie behavior, runtime markers, script traits, or wire behavior
    - if only one weak hint exists, keep the classification provisional and continue evidence gathering
    - if the family changes after new evidence, restate it explicitly
-3. delivery intent
+4. delivery intent
    - state the smallest acceptable final shape
    - reject browser-backed replay, profile-bound state, and automation-driven submission up front
+
+## Capability-aware evidence roles
+
+Choose an evidence role from the capability snapshot, not from a vendor label. Roles describe the proof needed next; they are not permanent routes, browser products, or permission to keep multiple target browsers active.
+
+| Evidence role | Use it for | Minimum proof | Capability-aware limit or fallback |
+|---|---|---|---|
+| `fingerprint-baseline` | A clean flow where risk, visible interaction, renderer state, or observer effect may change the sample | untouched request and response, redirects, page state, configured browser mode, and session inventory | assign this role only to an installed target-compatible mode; if none is proved, record the role gap and keep the ordinary clean Chrome baseline honest |
+| `debugger-trace` | Initiator, source, call-frame, argument, return-value, or canonical-mutation evidence | correlate one wire request with its caller and decisive mutation boundary | use only schema-confirmed debugger capabilities; fall back to saved source, the earliest stable breakpoint, a narrow behavior-preserving hook, or offline runtime proof |
+| `cdp-bridge` | Network, Runtime, or Debugger evidence inside an already active target-compatible environment | record how the endpoint was obtained, which protocol domains are available, and how events correlate to the baseline | optional and conditional on an explicitly exposed, authorized connection; never guess a port, profile, launch method, or MCP helper |
+
+For every fresh `live-target`, these roles supplement rather than replace the required first passes: collect the Chrome baseline, complete a `sequential handoff`, then collect `js-reverse` evidence. A typical role flow is:
+
+```text
+Chrome baseline (`fingerprint-baseline` when the configured mode proves that role)
+  -> optional `cdp-bridge` while the same family remains TARGET_ACTIVE
+  -> evidence checkpoint
+  -> CHROME_PARKED or RETAINED_EXCEPTION
+  -> `js-reverse` `debugger-trace`
+```
+
+At most one browser tool family remains `TARGET_ACTIVE`. Treat `cdp-bridge` as an evidence technique under the current owner, not a third concurrent owner. After a role returns its proof or named blocker, hand evidence to the role that can answer the next missing question; do not stay on one route merely because it was selected first. Apply the lifecycle gate in `references/tool-playbook.md` on every switch, including a return to an earlier role.
 
 ## Escalation ladder before full browser dependence
 
@@ -157,3 +199,12 @@ In that case:
 4. prefer initiator stacks and request diffs over broad global monkey patches
 
 Do not call the target "browser-only" until you have ruled out your own instrumentation.
+
+
+## Continuation sibling scan
+
+On `continuation` intake, before restarting a long reverse:
+
+- search the workspace for existing collectors, challenge helpers, or notes for the same host or endpoint family
+- reuse a proven pure-protocol path when the target and environment are unchanged
+- only reopen browser or deep reverse surfaces that new evidence actually invalidates

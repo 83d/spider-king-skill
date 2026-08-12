@@ -2,6 +2,18 @@
 
 Use this playbook when a hostile runtime already produces the decisive artifact locally, and the job is to harvest it without turning the solution into browser automation.
 
+## Contents
+
+- [Route here when](#route-here-when)
+- [Core idea](#core-idea)
+- [Default artifact priority](#default-artifact-priority)
+- [API returns challenge HTML](#api-returns-challenge-html)
+- [Fast execution path](#fast-execution-path)
+- [High-value checks](#high-value-checks)
+- [Common traps](#common-traps)
+- [Delivery guidance](#delivery-guidance)
+- [Minimal handoff notes](#minimal-handoff-notes)
+
 ## Route here when
 
 - a bootstrap or challenge script exposes a stable getter or object method after initialization
@@ -23,9 +35,34 @@ Typical stable boundaries are:
 
 - an exposed getter after synchronous init
 - the outgoing XHR or fetch call
+- a navigation target or redirect URL emitted before full page completion
 - one synthetic request sent through a globally hooked transport primitive
 - a lower-level serializer, signer, packer, or export below a failing outer facade
 - a cleaner alternate route that makes full challenge execution unnecessary
+
+## Default artifact priority
+
+When multiple boundaries are available, harvest in this order:
+
+1. navigation target or redirect URL that already carries the decisive query or path state
+2. composed outbound `Cookie` header or cookie string sufficient for Python replay
+3. single derived cookie value
+4. storage-resident module only if later regeneration still depends on it
+5. full encrypt-chain rebuild
+
+If the runtime already emitted a replayable redirect URL, stop patching DOM parity and hand control to Python.
+
+## API returns challenge HTML
+
+Treat a business JSON route that responds with challenge HTML as a first-class challenge path, not as a dead endpoint:
+
+1. freeze the HTML body, linked challenge script, and seed cookies on one session chain
+2. execute locally with a minimal host when needed
+3. harvest redirect URL and/or cookies
+4. replay from Python, including any original-URL echo field required by evidence
+
+Route executor details to `references/local-challenge-executor-playbook.md`.
+If the same field also has a short offline signer candidate, route writer selection to `references/dual-writer-param-playbook.md`.
 
 ## Fast execution path
 
@@ -33,6 +70,7 @@ Typical stable boundaries are:
    Choose one:
    - exposed getter
    - intercepted XHR or fetch egress
+   - captured navigation or redirect target
    - lower primitive below a broken facade
    - alternate-route bypass
 
@@ -54,6 +92,7 @@ Typical stable boundaries are:
    - decisive headers
    - outbound `Cookie` header
    - derived cookie
+   - final redirect URL or same-route replay URL
    - final token
 
 5. Hand control back to Python.
@@ -65,6 +104,7 @@ Typical stable boundaries are:
 ## High-value checks
 
 - whether the artifact exists before noisy timer callbacks finish
+- whether the runtime already emitted a replayable navigation target before later DOM or navigation errors surfaced
 - whether the runtime needs script insertion or page bootstrap instead of blocking eval
 - whether the self-issued request can be captured locally without touching the live site
 - whether one minimal synthetic request through the hook already proves the signer injection boundary, leaving only business payload modeling to local code
@@ -78,10 +118,12 @@ Typical stable boundaries are:
 ## Common traps
 
 - trying to finish every timer callback when one getter already returns the artifact
+- continuing to patch navigation or DOM parity after the runtime already exposed the replayable redirect target
 - patching every missing DOM hole instead of intercepting the outgoing request
 - reverse-engineering a whole signer before proving what a globally hooked request primitive injects for free
 - rebuilding every inner crypto stage after the runtime already emits a replayable final body or decisive headers
 - reverse-engineering every individual cookie writer before checking whether the runtime already exposes the authoritative replay `Cookie` header
+- discarding a recovered redirect target because the local runtime later reports "navigation not implemented" or another post-artifact notice
 - trusting stored cookie state over an observed outbound `Cookie` header when the two diverge
 - discarding the whole SDK route because the outer init path failed before checking for a usable lower serializer or packer
 - using catch-all error swallowing that hides recursion, stack overflow, or state corruption

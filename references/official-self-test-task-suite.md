@@ -2,6 +2,13 @@
 
 Use this file when validating whether `spider-king` still behaves like a protocol-first reverse skill after edits.
 
+## Contents
+
+- [How to use the suite](#how-to-use-the-suite)
+- [Pass criteria across the whole suite](#pass-criteria-across-the-whole-suite)
+- [Task catalog (149 cases)](#task-0-fresh-target-with-one-blocked-tool); search for `^## Task ` to list every case
+- [Failure signals](#failure-signals)
+
 ## How to use the suite
 
 For each task:
@@ -10,6 +17,8 @@ For each task:
 2. check which references and scripts the skill would route to
 3. verify the proposed delivery shape
 4. fail the test if the answer drifts into browser automation as final delivery
+
+Static validation only parses and fingerprints these contracts; it does not perform the four steps above. For a behavioral claim, use a fresh runner and independent reviewer under `references/forward-testing-playbook.md`, then validate their external response artifacts with `scripts/forward_test_report.py`. Only a passing `scope=full` report covering all 149 tasks is full-suite forward-test evidence.
 
 ## Pass criteria across the whole suite
 
@@ -27,7 +36,17 @@ For each task:
 - escalation follows one rung at a time, with the prior rung's exact failure made explicit before widening runtime, patch surface, or transport exceptions
 - reusable wins preserve 5 to 15 minimal verifiable facts that can be re-checked after an upgrade instead of only copying volatile artifacts
 - recurring shortcut temptations route to the anti-pattern library instead of being hand-waved as "temporary" exceptions
-- Node.js analysis dependencies are installed only under `npm root -g`, never in the target project
+- paired browser evidence is collected sequentially with only one `TARGET_ACTIVE` tool family
+- lifecycle reporting distinguishes parked tools from confirmed process closure and preserves unreplayable session state through explicit exceptions
+- intake routing distinguishes live targets, artifact-only evidence, and continuations without inventing missing proof
+- missing optional tools route to supported fallbacks through a recorded capability snapshot
+- browser acquisition roles are selected from current capabilities and hand off sequentially instead of locking the whole job to one vendor route
+- implementation briefs are conditional decision records, not mandatory ceremonies or implicit permission grants
+- environment checks report project-local runtime coherence and explicit lockfile provenance without hardcoded workstation paths
+- hook timing fallbacks preserve preload versus post-load evidence limits and never invent unavailable methods
+- compact collector handoffs keep the decisive protocol and proof facts in one redacted canonical summary
+- official tasks retain non-empty prompts, expected routes, and required conclusions that can be exported structurally
+- reports and proof manifests are redacted by default
 
 ## Task 0: Fresh target with one blocked tool
 
@@ -89,6 +108,146 @@ Must conclude:
 - try the smallest next rung that answers that blind spot before broad host escalation
 - keep the final delivery gate browser-free
 
+## Task 0BB: Different client stacks can expose different gate families
+
+Prompt:
+
+```text
+The same route returns one verifier page under a plain HTTP client, but a browser-impersonated client reaches a different challenge document whose local bootstrap later leads to business success. Should I reverse the first page I saw?
+```
+
+Expected route:
+
+- `references/startup-triage-playbook.md`
+- `references/transport-pre-gate-playbook.md`
+
+Must conclude:
+
+- classify the target as transport-gated before deep application reversal
+- freeze a narrow admission matrix across client stacks and returned challenge families
+- reverse the branch that matches the browser-admitted bootstrap chain, not the first weaker-client detour
+- keep the transport exception route-local unless broader evidence says otherwise
+
+## Task 0BC: Header spoofing does not clear a pre-HTTP gate
+
+Prompt:
+
+```text
+I copied the browser User-Agent, headers, and cookies into a plain requests client, but the route still gets challenged before I can observe meaningful application semantics. The browser and a browser-like transport client reach the real bootstrap chain. Decide the next move.
+```
+
+Expected route:
+
+- `references/transport-pre-gate-playbook.md`
+- `references/startup-triage-playbook.md`
+
+Must conclude:
+
+- classify the problem as transport-gated before blaming signer, cookie, or payload logic
+- copied HTTP identity does not clear a gate decided by ClientHello, ALPN, or H2 profile
+- compare pre-HTTP transport evidence before reopening application reversal
+- keep any transport exception route-local unless wider evidence says otherwise
+
+## Task 0BD: JA3 or JA4 is a hint, not the whole contract
+
+Prompt:
+
+```text
+I want to freeze one browser JA3 hash as the replay target, but repeated captures from the same browser family change extension order and GREASE while the route still admits them. Recover the debugging rule.
+```
+
+Expected route:
+
+- `references/transport-pre-gate-playbook.md`
+- `references/doctrine-index.md`
+
+Must conclude:
+
+- treat JA3, JA4, or similar hashes as summary indicators rather than the protocol itself
+- compare the underlying ClientHello, ALPN, and H2 profile instead of cargo-culting one unstable hash
+- preserve family behavior when extension order or GREASE is intentionally variable
+- prove acceptance against the route, not against one frozen fingerprint string
+
+## Task 0BE: Runtime capture outranks source implementation tables
+
+Prompt:
+
+```text
+I found the browser TLS library's implemented cipher and named-group arrays, so I plan to copy those arrays directly into a native client and call that the browser profile without taking a packet capture.
+```
+
+Expected route:
+
+- `references/transport-pre-gate-playbook.md`
+- `references/native-transport-profile-playbook.md`
+
+Must conclude:
+
+- implementation tables do not prove runtime enablement, policy filtering, platform support, ordering, or emitted membership
+- pin the exact browser build and collect repeated runtime captures before translating source values
+- use source to explain the captured profile rather than overrule it
+- confirm the translated backend with a fresh packet-level profile diff
+
+## Task 0BF: Fingerprint randomization is not browser realism
+
+Prompt:
+
+```text
+My native transport can randomize cipher membership, ALPN, extension order, and HTTP/2 settings on every request. More hashes should look more human, so I want to enable every randomizer in production before proving one fixed profile.
+```
+
+Expected route:
+
+- `references/native-transport-profile-playbook.md`
+- `references/doctrine-index.md`
+
+Must conclude:
+
+- reproduce one coherent versioned browser-family profile before introducing variability
+- preserve only variability demonstrated by repeated captures from that browser family
+- keep correlated TLS, ALPN, H2, identity, and connection fields tied to one profile
+- keep deterministic proof mode separate from any research randomizer
+
+## Task 0BG: A proxy can replace the fingerprint under test
+
+Prompt:
+
+```text
+My local native client reports the intended TLS profile, but the diagnostic endpoint sees a different ClientHello whenever the configured proxy is enabled. I want to keep tuning cipher order in the client.
+```
+
+Expected route:
+
+- `references/native-transport-profile-playbook.md`
+- `scripts/transport_profile_diff.py`
+
+Must conclude:
+
+- prove whether the proxy tunnels CONNECT or terminates and rebuilds TLS before changing the local profile
+- treat the wire capture after the proxy as authoritative for what the server sees
+- keep proxy credentials out of captures and reports
+- retest the same fixed profile on a controlled direct or tunneling path
+
+## Task 0BH: Native helper load success is not transport delivery
+
+Prompt:
+
+```text
+The Rust and PyO3 wheel imports and one neutral TLS endpoint shows the expected summary hash. Can I declare the transport solved and ship it as the collector backend?
+```
+
+Expected route:
+
+- `references/native-transport-profile-playbook.md`
+- `references/delivery-gate-playbook.md`
+
+Must conclude:
+
+- compare raw TLS, ALPN, and H2 fields instead of relying on one summary hash
+- require negative control and repeated target business acceptance
+- prove cold connection, pooling or resumption, proxy behavior, and hard timeouts when used
+- install the wheel in a clean environment and keep the final collector browser-free
+
 ## Task 0C: Upgrade drift should be narrowed by facts first
 
 Prompt:
@@ -149,6 +308,341 @@ Must conclude:
 - do not scale from a lucky or partial local milestone
 - require repeated live replay before pagination or concurrency
 
+## Task 0F: Capability checks do not prewarm both target browsers
+
+Prompt:
+
+```text
+Both browser tool families are listed in the session. I want to prove they are available by opening the target in both of them at the same time before analysis starts.
+```
+
+Expected route:
+
+- `references/startup-triage-playbook.md`
+- `references/tool-playbook.md`
+
+Must conclude:
+
+- use schemas, tool lists, or non-target health surfaces for capability confirmation when available
+- do not open the target in both tools as a startup check
+- assign initial `TARGET_ACTIVE` ownership to Chrome and defer the first js-reverse target action until handoff
+
+## Task 0G: Normal Chrome to js-reverse handoff
+
+Prompt:
+
+```text
+Chrome has captured the landing flow, clean request, response, screenshot, and redirect chain. I now need initiator stacks and source tracing in js-reverse. Define the safe switch.
+```
+
+Expected route:
+
+- `references/tool-playbook.md`
+- `references/workflow-overview.md`
+
+Must conclude:
+
+- save the baseline and state inventory before switching
+- close extra Chrome pages when supported and park the unavoidable final page at about:blank
+- mark Chrome parked rather than closed
+- grant js-reverse `TARGET_ACTIVE` ownership only after the handoff gate passes
+
+## Task 0H: Unreplayable session state uses a retained exception
+
+Prompt:
+
+```text
+The Chrome page holds the only successful manual verification round and one in-memory session key. Reloading or navigating away would destroy them, but I still need js-reverse evidence.
+```
+
+Expected route:
+
+- `references/tool-playbook.md`
+- `references/session-contract-playbook.md`
+
+Must conclude:
+
+- do not destroy the only live state merely to satisfy cleanup
+- mark the Chrome state `RETAINED_EXCEPTION` and record why it is not replayable
+- do not invoke the retained family while another family owns `TARGET_ACTIVE`
+- postpone a same-session switch until state transfer or faithful replay is possible
+
+## Task 0I: Parked is not closed
+
+Prompt:
+
+```text
+The installed Chrome tool cannot close its last page, and the installed js-reverse tool exposes no page-close or browser-close operation. Can I report both browser processes as closed after navigating to about:blank?
+```
+
+Expected route:
+
+- `references/tool-playbook.md`
+
+Must conclude:
+
+- report `CHROME_PARKED` or `JS_REVERSE_PARKED`, not closed
+- use `CLOSED` or `MCP_PROCESS_ENDED` only after explicit tool or process confirmation
+- never use taskkill or broad process termination to manufacture a closed state
+
+## Task 0J: Browser mode follows installed capabilities
+
+Prompt:
+
+```text
+The skill says to start js-reverse headless and switch to headful or CloakBrowser when needed, but this installed tool exposes none of those switches on new_page. Decide the operating rule.
+```
+
+Expected route:
+
+- `references/tool-playbook.md`
+
+Must conclude:
+
+- obey the configured mode and do not invent runtime switching controls
+- use a separately configured mode or server restart only when the environment supports it
+- treat headless/headful response differences as evidence and record the reason for changing mode
+- preserve headful or stealth-capable fallback for visible interaction, renderer-dependent evidence, or automation detection
+
+## Task 0K: Returning from js-reverse to Chrome
+
+Prompt:
+
+```text
+After source tracing in js-reverse, I need to return to Chrome to reproduce one visible interaction and verify whether the network request changes. Define the switch back.
+```
+
+Expected route:
+
+- `references/tool-playbook.md`
+- `references/workflow-overview.md`
+
+Must conclude:
+
+- save source, breakpoint, initiator, and request evidence first
+- remove breakpoints, resume execution, and park js-reverse as far as supported
+- restore or reacquire Chrome state explicitly instead of assuming the old page is still a clean baseline
+- keep only Chrome `TARGET_ACTIVE` during the visible-flow verification
+
+## Task 0L: Artifact-only intake does not invent browser evidence
+
+Prompt:
+
+```text
+I only have one saved request, its response, and a JavaScript signer snippet. There is no live target URL in scope yet. Start the reverse without wasting time or claiming evidence I did not provide.
+```
+
+Expected route:
+
+- `references/startup-triage-playbook.md`
+- `references/tool-playbook.md`
+
+Must conclude:
+
+- classify the intake as `artifact-only`
+- analyze the supplied wire sample and source locally without ceremonial browser startup
+- label live endpoint acceptance, current runtime provenance, and refresh behavior as unproven
+- request a live target only when the next implementation claim actually depends on it
+
+## Task 0M: Continuation intake reuses a current gate
+
+Prompt:
+
+```text
+This is the same target and session model as the previous phase. The tool registry and browser mode have not changed; I am only adding one fresh response sample. Should I restart both browser passes?
+```
+
+Expected route:
+
+- `references/startup-triage-playbook.md`
+- `references/workflow-overview.md`
+
+Must conclude:
+
+- classify the intake as `continuation`
+- reuse the current startup and capability gate while its assumptions remain valid
+- reopen only the evidence surfaces invalidated by the new response
+- restate the gate if the target context, session assumptions, tool registry, or delivery goal changes
+
+## Task 0N: Missing optional tools use supported fallbacks
+
+Prompt:
+
+```text
+The current js-reverse registry has breakpoints, paused-frame inspection, evaluation, and stepping, but it does not expose dedicated trace-function or before-load injection helpers. Continue the analysis honestly.
+```
+
+Expected route:
+
+- `references/tool-playbook.md`
+- `references/hook-techniques.md`
+
+Must conclude:
+
+- record the missing optional methods in the capability snapshot
+- trace named helpers with supported breakpoint, paused-frame, evaluation, and stepping tools
+- use Chrome `navigate_page(initScript=...)` when supported for justified preload observation, or choose an early breakpoint or offline runtime fallback
+- do not block the reverse or fabricate unavailable tool calls
+
+## Task 0O: Sensitive artifacts are redacted by default
+
+Prompt:
+
+```text
+The successful request contains an Authorization header, account cookies, and one session key. I need proof artifacts and a final report without leaking reusable credentials.
+```
+
+Expected route:
+
+- `references/report-templates.md`
+- `references/delivery-gate-playbook.md`
+- `references/cookie-provenance-playbook.md`
+
+Must conclude:
+
+- keep exact secret values only in a task-local ignored secret store when operationally necessary
+- report names, provenance, scope, expiry, refresh rules, and redacted hashes instead of reusable values
+- keep screenshots, fixtures, chat output, and version control free of raw secrets
+- record artifact hashes and session scope in a secret-free `analysis/proof_manifest.json`
+
+
+## Task 0P: Paste-ready hook uses the browser-hook profile
+
+Prompt:
+
+```text
+I only need a DevTools Console snippet that logs who sets the x-sign request header for one API path. Do not build a full collector yet.
+```
+
+Expected route:
+
+- `references/profiles/browser-hook-snippets/index.md`
+- `references/hook-techniques.md`
+
+Must conclude:
+
+- use the browser-hook profile for a minimal reversible observation script
+- do not restart full unknown-target collector discovery
+- classify snippet-only delivery without current-target interaction as `artifact-only` and label live hit verification as unproven
+- if fresh current-target interaction becomes necessary, switch to `live-target` and apply sequential paired browser evidence
+- keep logs secret-safe and provide restore guidance
+
+## Task 0Q: Known entry Node gap uses env-patch, load success is not enough
+
+Prompt:
+
+```text
+window.sdk.sign(params) and one fixed browser output are already known. In Node the module loads after I stub navigator, but the sign length still mismatches. Patch the host surface without opening Playwright.
+```
+
+Expected route:
+
+- `references/profiles/env-patch/index.md`
+- `references/environment-patch-playbook.md`
+- `references/pure-python-rebuild-playbook.md`
+
+Must conclude:
+
+- use the env-patch diagnosis loop around first divergence
+- module load success is not functional success
+- only move to pure-Python rebuild after fixed-vector parity exists
+
+## Task 0R: Fixed-trace pure Python rebuild needs fixtures first
+
+Prompt:
+
+```text
+I already have fixed URL material, UA, timestamp, and the exact browser sign string. Port the signer to pure Python for long-term maintenance and expose a right-click runnable entrypoint.
+```
+
+Expected route:
+
+- `references/pure-python-rebuild-playbook.md`
+- `references/delivery-gate-playbook.md`
+
+Must conclude:
+
+- freeze fixtures and port one primitive at a time
+- require fixed-vector parity before request glue
+- deliver a PyCharm right-click `main.py` or equivalent with no required CLI args
+
+## Task 0S: Artifact evidence plus URL stays offline first
+
+Prompt:
+
+```text
+I have a HAR export, the final request headers, a minified signer file, and a target URL. Do not open a browser or send requests yet. First tell me what the real moving field and mutation boundary appear to be.
+```
+
+Expected route:
+
+- `evidence-reuse`
+- `references/provider-work-order.md` only if the next action would write, execute target code, or contact the target
+
+Must conclude:
+
+- classify the work as `artifact-only` or artifact-led `evidence`
+- do not run the paired browser gate just because a URL is present
+- do not ask for project root, replay budget, or browser approvals until a gated action is needed
+- label current endpoint behavior and runtime provenance as unproven
+
+## Task 0T: Bare URL is not live replay permission
+
+Prompt:
+
+```text
+Here is the page URL. Build whatever you need and try one live request if it looks necessary.
+```
+
+Expected route:
+
+- Startup Gate
+- `references/provider-work-order.md`
+
+Must conclude:
+
+- a bare URL can start intake, but it does not authorize browser navigation, writes, account/session use, dependency install, or live replay
+- ask only for the missing scope and permission fields needed by the next gated action
+- stay offline until the user approves that action
+
+## Task 0U: Non-empty sign and one 200 are not acceptance
+
+Prompt:
+
+```text
+The local helper now emits a long sign string and the first HTTP request returned 200 once. Can we scale pages and concurrency?
+```
+
+Expected route:
+
+- `references/delivery-gate-playbook.md`
+- `references/troubleshooting-playbook.md`
+
+Must conclude:
+
+- non-empty sign, token length, helper load success, one cookie jar, or one HTTP 200 is not semantic proof
+- require fixed-vector parity, content-type and business-shape validation, repeated replay, and next-page or cursor proof before scale
+- do not add pagination or concurrency yet
+
+## Task 0V: Historical case reuse needs independent signals
+
+Prompt:
+
+```text
+I found an old helper for a site with the same `sign` parameter name and a similar 403. Use it directly for this new target.
+```
+
+Expected route:
+
+- `references/case-reuse-playbook.md`
+
+Must conclude:
+
+- one parameter name, one status code, or one plausible helper output cannot select a reusable case
+- require exact scope or at least two independent high-confidence signals
+- run fixed vectors and wire-slot comparison before live replay
+- treat historical helpers as `template` or `helper-only` until current-target proof exists
+
 ## Task 1: Decoy endpoint versus real endpoint
 
 Prompt:
@@ -204,6 +698,26 @@ Must conclude:
 - the final transport slot is part of the contract
 - reproduce the live header or wrapper placement instead of mutating a blob that was already good
 
+## Task 2B: Evidence surfaces do different jobs
+
+Prompt:
+
+```text
+The initiator stack shows where a token is assembled, a local hook sees the helper return a plausible value, and an environment patch makes the page stop throwing. The outbound request still differs from the live browser and the business API still fails. Decide what each proof surface actually proves.
+```
+
+Expected route:
+
+- `references/tool-playbook.md`
+- `references/workflow-overview.md`
+
+Must conclude:
+
+- initiator and source traces prove where logic lives, not what finally crossed the wire
+- wire or egress evidence proves what actually left the runtime
+- environment traces prove host-surface truth, not downstream business acceptance
+- downstream business replay is the final authority on whether the recovered path is accepted
+
 ## Task 3: Helper named md5 is not standard
 
 Prompt:
@@ -222,6 +736,72 @@ Must conclude:
 
 - helper names do not prove behavior
 - fixed-input comparison is required
+
+
+## Task 3A: Modified digest constants beat the algorithm name
+
+Prompt:
+
+```text
+The page and source both say SM3, the token is 64 hex chars, but hashlib-compatible SM3 never matches a captured token on the same path + timestamp + page preimage. I also see a native-code environment check near the constants. Deliver a browser-free Python signer.
+```
+
+Expected route:
+
+- `references/crypto-patterns.md`
+- `references/patched-helper-playbook.md`
+- `references/env-diff-playbook.md`
+
+Must conclude:
+
+- algorithm names and digest length are not proof of a standard implementation
+- freeze one captured preimage and digest, then diff IV, round constants, packing masks, and compress masks
+- reproduce the browser-selected branch before porting constants into Python
+- validate uint32 truncation and `ROTL(x, 0)` edge cases during the Python port
+- ship a fixed-input self-check; do not call stock SM3 done
+
+## Task 3B: String-table rewrite stays at zero hits until member maps are expanded
+
+Prompt:
+
+```text
+I dumped an obfuscator-style string table and wrote a regex replacer for decoder(0xNNN), but the 50KB one-line bundle does not change. Calls look like ar(di.a) and the dump keys are plain hex without 0x. How should I recover a readable signer slice offline?
+```
+
+Expected route:
+
+- `references/obfuscation-guide.md`
+- `references/offline-inline-deob-playbook.md`
+- `references/tool-playbook.md`
+
+Must conclude:
+
+- extract string-array, decoder, and rotate IIFE, then dump strings locally
+- rewrite in two passes: member-map objects first, hex literals second
+- normalize hex keys by stripping `0x` when dump keys are plain hex
+- beautify when line numbers are unusable, but stop once the protocol slice is recoverable
+- if an evaluate-style export is JSON-wrapped, decode it before treating the file as source
+
+## Task 3C: Page text claims session enters the signer, wire disagrees
+
+Prompt:
+
+```text
+The challenge text says every request needs sessionid and that it may participate in the token algorithm. Captured list requests have no session cookie and still return full page data. Submit later needs login. Build the collector contract.
+```
+
+Expected route:
+
+- `references/session-contract-playbook.md`
+- `references/anti-patterns-playbook.md`
+- `references/pattern-atlas.md`
+
+Must conclude:
+
+- page text is not wire evidence
+- keep anonymous list collection when the business response already succeeds without session
+- do not hardcode session material into the signer without fixed-sample proof
+- expose login only for the submit chain that actually requires it
 
 ## Task 4: Server returns JS bootstrap before data
 
@@ -314,6 +894,67 @@ Must conclude:
 - a validator is only trustworthy after a negative control makes it fail
 - do not persist cookies or session artifacts based on a page-shell 200 alone
 - choose a business endpoint that deterministically distinguishes valid from invalid state
+
+
+## Task 6B: Login cookies are not business identity
+
+Prompt:
+
+```text
+Account password login returns success and I can open the back-office home page. Collection still returns another shop's rows. The UI also has tenant, merchant-type, and shop selectors after login. Deliver a browser-free session bootstrap.
+```
+
+Expected route:
+
+- `references/multi-context-session-playbook.md`
+- `references/session-contract-playbook.md`
+- `references/anti-patterns-playbook.md`
+
+Must conclude:
+
+- split account login from business-context activation
+- validate every required identity layer before exporting cookies
+- do not treat home-page load as proof that the target data range is selected
+
+## Task 6C: Silent incomplete activation needs final identity reread
+
+Prompt:
+
+```text
+My update-session call returns HTTP 200 and success=true after I submit the shop value. Scrapes still look like the previous shop. A known-good browser trace also sends a data-range type field that my payload omitted.
+```
+
+Expected route:
+
+- `references/multi-context-session-playbook.md`
+- `references/cookie-provenance-playbook.md`
+- `references/anti-patterns-playbook.md`
+
+Must conclude:
+
+- partial activation can fail silently
+- compare the full activation payload, including type and value fields
+- reread final identity from an authoritative surface before export or scrape
+
+## Task 6D: Display labels need unique protocol ids
+
+Prompt:
+
+```text
+Operators select a Chinese shop name. The activation API wants a resource value from the authorization list. My resolver uses contains() and sometimes matches two rows, then picks the first.
+```
+
+Expected route:
+
+- `references/multi-context-session-playbook.md`
+- `references/session-contract-playbook.md`
+- `references/pattern-atlas.md`
+
+Must conclude:
+
+- use display labels only to locate live authorization rows
+- submit protocol ids, not UI text
+- require exactly one match and stop on zero or many
 
 ## Task 7: Side asset carries the signer
 
@@ -422,7 +1063,188 @@ Must conclude:
 - prove the transform before tuning traces or blaming OCR
 - store the mapping explicitly in the collector
 
+## Task 9D: Verifier success is intermediate, and token order matters
+
+Prompt:
+
+```text
+The verify endpoint returns 200 and a token, but the business request still fails if I reuse that token in a later round or append it after the sign step. In the live flow, the verifier artifact enters the plaintext payload before sign and encrypt. Recover the rule.
+```
+
+Expected route:
+
+- `references/verifier-replay-playbook.md`
+
+Must conclude:
+
+- verifier-endpoint success alone does not prove the business flow is solved
+- prove whether the verifier artifact is fresh, single-use, or same-round bound before reusing it
+- preserve the live ordering when verifier output feeds pre-sign or pre-encrypt plaintext
+
+## Task 9E: Correct answer still fails when a telemetry sidecar is omitted
+
+Prompt:
+
+```text
+The same human-confirmed answer and behavior track passes when every verifier request is allowed, but the final semantic result changes to rejection when one device or telemetry route is blocked. The main verify body remains unchanged, so I want to keep tuning the track.
+```
+
+Expected route:
+
+- `references/verifier-replay-playbook.md`
+- `references/troubleshooting-playbook.md`
+
+Must conclude:
+
+- treat the verifier as an ordered transcript that may include required sidecars
+- inventory warm-up, device, log, status, and telemetry routes with their initiators and state writes
+- omit and restore one route family at a time while holding the session, answer, track, and timing policy fixed
+- judge necessity by final verifier and downstream semantics, not the sidecar HTTP status alone
+
+## Task 9F: Complete baseline and sparse delta describe different states
+
+Prompt:
+
+```text
+One verifier request uploads a complete environment profile and a later request sends a sparse delta. Both packets decrypt, parse, sign, and pass their own checksums, but shared identity, time, and counter fields were generated independently and the final verify rejects the round.
+```
+
+Expected route:
+
+- `references/verifier-replay-playbook.md`
+- `references/session-contract-playbook.md`
+
+Must conclude:
+
+- packet-local validity does not prove transcript consistency
+- prove the baseline scope, then make every dependent full or sparse packet in the round derive from one consistent baseline instance
+- classify cross-request relations as equal, subset, derived, monotonic, counter-linked, or packet-local
+- keep all dependent packets on the same session and verifier round until cross-round reuse is proven
+
+## Task 9G: Declared behavior time is not real elapsed time
+
+Prompt:
+
+```text
+The trajectory and telemetry claim several seconds of interaction and all timestamps are monotonic, but the collector sends initialization, behavior upload, and final verify almost immediately. Decide what timing evidence is still missing.
+```
+
+Expected route:
+
+- `references/verifier-replay-playbook.md`
+
+Must conclude:
+
+- distinguish absolute payload timestamps, event deltas, and actual wall-clock request spacing
+- preserve the observed ordering and real wait only where evidence proves the verifier requires it
+- verify server-time, local-time, and event-offset relationships separately
+- retain any user-defined hard timeout or honeypot cap while reproducing required elapsed time
+
+## Task 9H: Dynamic asset path does not prove a new verifier algorithm
+
+Prompt:
+
+```text
+Each verifier initialization returns a different script path, but the public VM or helper boundary, fixed inputs, and outputs still match the existing local codec. I plan to re-extract and rewrite the entire algorithm for every path.
+```
+
+Expected route:
+
+- `references/verifier-replay-playbook.md`
+- `references/jsvmp-analysis-playbook.md`
+- `scripts/transform_trace_diff.py`
+
+Must conclude:
+
+- hash the active asset and compare the stable public helper or VM boundary before re-reversing
+- rerun deterministic fixed vectors and stage traces to distinguish path churn from behavior drift
+- retain the current narrow helper while parity remains proven
+- create a new helper version only when framing, stage behavior, or accepted outputs actually diverge
+
+## Task 9I: Contaminated hand-slide is not trajectory truth
+
+Prompt:
+
+```text
+I opened the slider in an automation-owned browser with hooks installed. A real person dragged the slider twice and both verifies failed. We are about to rewrite the track generator.
+```
+
+Expected route:
+
+- `references/positive-sample-hygiene-playbook.md`
+- `references/verifier-replay-playbook.md`
+- `references/anti-patterns-playbook.md`
+
+Must conclude:
+
+- grade the samples as contaminated-failure until a clean ordinary-browser oracle exists
+- do not treat automation hand-slide failure as proof the trajectory family is wrong
+- collect or request a clean-success sample before major track rewrites
+- environment risk and observer effect are first-class surfaces
+
+## Task 9J: Reject code needs localization before track search
+
+Prompt:
+
+```text
+Our packets decrypt, checksums pass, sidecars return HTTP 200, and final verify still returns a short reject code. The team is generating hundreds of synthetic tracks.
+```
+
+Expected route:
+
+- `references/verifier-error-localization-playbook.md`
+- `references/verifier-replay-playbook.md`
+
+Must conclude:
+
+- run structure, sidecar, consistency, and timeline ablations before answer or track search
+- build a task-local error map; do not import another vendor code table as doctrine
+- packet validity is not transcript consistency
+- stop at the first surface that controllably reproduces the reject family
+
+## Task 9K: Verifier accepted, business still challenged
+
+Prompt:
+
+```text
+Final verify returns the platform accepted semantic, but re-fetching the original document still shows the challenge shell. The collector is being packaged as done.
+```
+
+Expected route:
+
+- `references/verifier-replay-playbook.md`
+- `references/delivery-gate-playbook.md`
+
+Must conclude:
+
+- verifier success is intermediate
+- prove first downstream consumer packaging on the same round
+- define business-pass by content fingerprint, not only status code
+- do not package until the consumer gate passes or a true external blocker is named
+
+## Task 9L: Exit reputation collapses after consecutive rejects
+
+Prompt:
+
+```text
+Protocol replay looked better for a while, then every attempt on the same exit started failing, including a later ordinary-browser hand slide. The engineer wants more track mutations.
+```
+
+Expected route:
+
+- `references/positive-sample-hygiene-playbook.md`
+- `references/verifier-error-localization-playbook.md`
+- `references/doctrine-index.md`
+
+Must conclude:
+
+- environment risk is its own failure surface
+- consecutive rejects can poison later human samples on the same exit
+- change environment intentionally and re-grade samples before more algorithm churn
+- keep protocol and environment conclusions separate in the report
+
 ## Task 10: GraphQL contract, not REST
+
 
 Prompt:
 
@@ -491,6 +1313,65 @@ Must conclude:
 - exact body serialization can be part of the protocol contract
 - preserve field order, encoding, and frontend-style urlencoding when the route is legacy or wrapper-sensitive
 - do not assume that semantically equivalent key-value pairs are replay-equivalent on the wire
+
+
+## Task 12B: HTTP 200 is not async export create success
+
+Prompt:
+
+```text
+My export create endpoint returns HTTP 200 and a vague success flag, but the history list does not gain a new task id. A later poll still finds an old successful export. Build the protocol acceptance rules.
+```
+
+Expected route:
+
+- `references/async-export-job-playbook.md`
+- `references/anti-patterns-playbook.md`
+- `references/pattern-atlas.md`
+
+Must conclude:
+
+- HTTP 200 is not create success
+- snapshot task ids before create and require a new or create-returned id
+- match filters and field set before accepting the task
+
+## Task 12C: Do not reuse pre-create historical export tasks
+
+Prompt:
+
+```text
+Polling grabs the newest successful history row. The dates are wrong and the file has fewer columns than I requested. How should task selection work?
+```
+
+Expected route:
+
+- `references/async-export-job-playbook.md`
+- `references/anti-patterns-playbook.md`
+
+Must conclude:
+
+- never select by newest row alone
+- isolate with create-returned id or post-create new ids
+- require condition and field-set match; fail closed on historical pollution
+
+## Task 12D: Field-count gate blocks incomplete exports
+
+Prompt:
+
+```text
+The downloaded CSV opens fine, but it has fewer columns than the custom field array I sent on create. Should I still upsert?
+```
+
+Expected route:
+
+- `references/async-export-job-playbook.md`
+- `references/delivery-gate-playbook.md`
+
+Must conclude:
+
+- compare requested field count to downloaded columns
+- fail closed before persistence
+- treat thinner files as create or task-isolation bugs, not as partial success
 
 ## Task 13: Environment mismatch
 
@@ -568,6 +1449,25 @@ Must conclude:
 - patch narrow local adapters or stubs for `canvas`, WebGL, layout, style, or descriptor surfaces before escalating to broader emulation
 - final delivery stays Python plus a tiny local helper, not browser-backed replay
 
+## Task 13C1: Lifecycle semantics beat name presence
+
+Prompt:
+
+```text
+The local helper already exposes document.all and iframe.contentWindow, but the token still diverges. In the page, document.all.length changes when an element is attached, and iframe.contentWindow exists only while the iframe stays attached. Recover the next rule.
+```
+
+Expected route:
+
+- `references/environment-patch-playbook.md`
+- `references/embedded-browser-runtime-playbook.md`
+
+Must conclude:
+
+- patch lifecycle semantics, not just global names
+- prototype-level boundaries such as appendChild and removeChild beat static placeholders when attachment state drives later probes
+- compare fixed-input outputs after each narrow patch before escalating to broader emulation
+
 ## Task 13D: iv8 host selected
 
 Prompt:
@@ -624,6 +1524,46 @@ Must conclude:
 - do not discard the whole SDK path because outer orchestration failed
 - bypass transport or telemetry glue and call the lower serializer, packer, signer, or export directly
 - keep the final split Python-first, with the local runtime limited to the surviving inner primitive
+
+## Task 13E1: Custom VM visible, but outer boundary comes first
+
+Prompt:
+
+```text
+The target wraps the signer inside a bytecode VM with opcode tables and a dispatch loop. I am tempted to instrument opcode handlers and interpreter branches immediately, but I have not yet proven the VM entry inputs, wrapper return, or request egress. Decide the next move.
+```
+
+Expected route:
+
+- `references/jsvmp-analysis-playbook.md`
+- `references/environment-patch-playbook.md`
+
+Must conclude:
+
+- map public VM inputs, outputs, wrapper returns, state writes, or request egress before touching interpreter internals
+- if output drift still looks host-semantic, patch the host surface before instrumenting opcode handlers
+- avoid devirtualization or interpreter surgery until the outer boundary is proven insufficient
+
+## Task 13E2: Outer boundary is insufficient, stable stage dispatcher remains
+
+Prompt:
+
+```text
+I proved the custom VM's public inputs, wrapper return, and final request slot, but the Python port still diverges somewhere inside a stable mode dispatcher. I want to log every opcode and branch next. Choose the smallest useful observation boundary.
+```
+
+Expected route:
+
+- `references/jsvmp-analysis-playbook.md`
+- `references/opaque-runtime-profile-playbook.md`
+- `scripts/transform_trace_diff.py`
+
+Must conclude:
+
+- capture ordered mode or transform inputs and outputs at the stable dispatcher before tracing individual opcodes
+- freeze one complete clean run with active asset and runtime hashes
+- compare clean and instrumented artifacts for observer effects
+- port and repair the first divergent stage instead of compensating in later output segments
 
 ## Task 13F: Callback says success, value is still empty
 
@@ -797,6 +1737,65 @@ Must conclude:
 - keep a separate live-generation mode for real traffic
 - do not mistake exact trace matching mode for the only acceptable production path once live replay succeeds
 
+## Task 13K1: Successful runtime profiles cannot be spliced
+
+Prompt:
+
+```text
+Several complete captured runtime profiles each reproduce an accepted packed artifact. Mixing the prefix, environment block, opaque gap, and tail from different successful profiles fails, so I plan to keep randomizing individual segments until one combination passes.
+```
+
+Expected route:
+
+- `references/opaque-runtime-profile-playbook.md`
+
+Must conclude:
+
+- treat each complete captured run as one atomic profile until independence is proven
+- preserve correlated and opaque blocks together instead of guessing segment semantics
+- use controlled splice or tamper attempts as negative evidence, not as production randomization
+- randomize only writers and variability demonstrated by repeated complete captures
+
+## Task 13K2: Local transforms still depend on captured runtime profiles
+
+Prompt:
+
+```text
+My pure-Python transforms match every captured stage and final byte, but they still require a complete environment profile captured from a runtime, and I cannot mint that profile from fresh explicit inputs. Can I report fully algorithmic generation because no browser runs during requests?
+```
+
+Expected route:
+
+- `references/opaque-runtime-profile-playbook.md`
+- `references/delivery-gate-playbook.md`
+
+Must conclude:
+
+- report the path as snapshot-driven generation rather than fully algorithmic
+- distinguish browser-free and runtime-free execution from capture independence
+- prove profile freshness, session scope, route scope, and upgrade behavior
+- keep profile provenance and the remaining writer gap explicit in the delivery record
+
+## Task 13K3: High artifact-pool acceptance is not generation proof
+
+Prompt:
+
+```text
+A large one-shot pool of previously accepted final artifacts gives a high live acceptance rate, but the collector cannot succeed with the pool removed. The current report also combines connection errors with target rejection. Decide whether the signer is complete.
+```
+
+Expected route:
+
+- `references/opaque-runtime-profile-playbook.md`
+- `references/delivery-gate-playbook.md`
+
+Must conclude:
+
+- classify the result as pool-backed replay, not recovered generation
+- require a no-pool test before claiming the writer or signer is solved
+- keep pool acceptance, locally generated acceptance, target rejection, and transport exceptions as separate statistics
+- record provenance, freshness, scope, exhaustion, and reuse policy if the user accepts a bounded fallback
+
 ## Task 13L: Pure helper still imports a runtime-backed predecessor
 
 Prompt:
@@ -931,6 +1930,28 @@ Must conclude:
 - URL query, body, response, and cookie may belong to one shared envelope family with field-specific variants
 - entry HTML, initial cookies, generated state, preflight token, and replay request should stay on one session chain unless reuse is separately proven
 - final delivery must model `entry -> local challenge/bootstrap -> token preflight -> business request -> local response decode`
+
+## Task 15A1: Business response returns the refresh contract
+
+Prompt:
+
+```text
+The business API returns HTTP 200 with an application challenge code plus seed, timestamp, and name fields. After I derive one replay token locally, merge it with those refreshed seed fields, and retry the same URL family, the request succeeds. The stored jar looks right, but failures continue until the exact outbound Cookie header matches the runtime. Recover the collector shape.
+```
+
+Expected route:
+
+- `references/challenge-state-envelope-playbook.md`
+- `references/cookie-provenance-playbook.md`
+- `references/environment-patch-playbook.md`
+
+Must conclude:
+
+- treat the application challenge payload as a response-side refresh contract, not a generic error
+- retry the same business route after local refresh before hunting alternate endpoints
+- update server-issued seed fields and locally derived replay fields as one bundle on one session chain
+- compare the exact outbound `Cookie` header against the stored jar when replay gaps remain
+- if a local helper still depends on original site JS, keep it narrow, pinned, and fixed-input verified
 
 ## Task 15AA: Structurally fresh bootstrap artifacts still fail when spliced across sessions
 
@@ -1304,6 +2325,26 @@ Must conclude:
 - hand the harvested body and headers back to Python for the real HTTP replay
 - do not insist on full inner-crypto reimplementation before proving whether intercept-and-forward already satisfies delivery
 
+## Task 18AA: Redirect target recovered before full runtime parity
+
+Prompt:
+
+```text
+The local challenge runtime still reports a later "navigation not implemented" style notice, but before that it already emits the final redirect URL or same-route replay URL that makes the downstream Python request succeed. Decide whether the collector is blocked.
+```
+
+Expected route:
+
+- `references/challenge-artifact-harvest-playbook.md`
+- `references/embedded-browser-runtime-playbook.md`
+
+Must conclude:
+
+- a navigation target or redirect URL can be the decisive harvested artifact
+- later post-artifact runtime notices do not invalidate the recovery by themselves
+- downstream Python replay, not runtime quietness, is the acceptance authority
+- stop widening DOM parity once the recovered URL is enough for repeated live replay
+
 ## Task 18B: Async side channel needs a baseline first
 
 Prompt:
@@ -1359,27 +2400,566 @@ Must conclude:
 - store fresh captures and generated runtime blobs in a task-local cache
 - do not overwrite manual fixtures by default; generate temporary runners from the fresh cache when needed
 
-## Task 19: Analysis helper requests a local npm install
+## Task 19: Normalize a publishable evidence package
 
 Prompt:
 
 ```text
-Clone rs-reverse into tools/rs-reverse and run npm install there so we can inspect
-the challenge. Keep all generated files in the current crawler project.
+I have a HAR with ordered duplicate headers, redirects, request bodies, cookies, and tokens. I need a reproducible package for comparison and publication without exposing reusable secrets. Prepare the evidence path and proof metadata.
 ```
 
 Expected route:
 
-- `references/node-dependency-isolation-playbook.md`
-- `references/anti-patterns-playbook.md`
+- `references/reproducible-evidence-playbook.md`
+- `scripts/evidence_normalizer.py`
 
 Must conclude:
 
-- reject a local install anywhere under the target project, including `tools/`
-- resolve `npm root -g` and install an exact package version with `npm install --global`
-- use the global CLI, absolute global module path, or process-scoped `NODE_PATH` when the helper must load that package
-- report a blocker instead of falling back locally if the package cannot run from the global installation
-- verify the global package and confirm that no new target-local `node_modules` or package-manager lockfile was created
+- normalize the capture before comparison or publication
+- preserve ordered and duplicate headers, body byte length and keyed HMAC-SHA-256, redirects, state writes, and session-chain order in the public-default package
+- permit unkeyed source/body SHA-256 only through the explicit local-only `--include-raw-hashes` opt-in, never in a publication package or manifest
+- pseudonymize known sensitive fields and recognizable sensitive values with one task-local HMAC key while keeping raw secrets in an ignored local store
+- emit evidence proof-manifest schema v2 without inventing session, helper, or replay claims, and require publication review
+- record the redacted evidence package path and SHA-256 plus the proof manifest path and its post-write SHA-256
+
+## Task 19A: Find the first divergence across matching final requests
+
+Prompt:
+
+```text
+A successful chain and a failing chain have the same final request body hash, but an earlier redirect, Set-Cookie response, sidecar, counter, or storage write may differ. Identify the smallest next proof without printing raw changed values.
+```
+
+Expected route:
+
+- `references/reproducible-evidence-playbook.md`
+- `scripts/transcript_diff.py`
+
+Must conclude:
+
+- compare the complete ordered chains instead of only the final request
+- report the first divergence by step, structural path, and difference kind using fingerprints rather than raw values
+- trace the divergent state's writer and first downstream consumer before tuning later fields
+- do not sort ordered header lists, collapse duplicate headers, or splice neighboring session chains to hide the difference
+
+## Task 19B: Require an offline oracle and negative control
+
+Prompt:
+
+```text
+A skill revision claims it handles exact request bytes, same-session bootstrap state, layered response decoding, and pagination route pivots. I want a deterministic offline check that catches plausible shortcuts before live replay.
+```
+
+Expected route:
+
+- `references/reproducible-evidence-playbook.md`
+- `scripts/practice_lab.py`
+
+Must conclude:
+
+- treat the skill-owned loopback lab as deterministic fixture evaluation, not a fresh live target that needs browser startup
+- exercise the four local protocol cases from a clean run
+- require both the positive oracle and the decisive negative control for every claimed case
+- reject a revision that passes only a permissive positive path or helper-load check
+- use the practice lab as deterministic preflight evidence, not as a replacement for repeated live business acceptance
+
+## Task 20: Multi-stage sidecars cannot stop after the first post
+
+Prompt:
+
+```text
+The clean browser trace emits three ordered sidecar POSTs with different body sizes before the business request works. My local runtime emits one non-empty POST, gets HTTP 200, and then I stop the event loop and submit the business request, which fails. Decide the next move.
+```
+
+Expected route:
+
+- `references/verifier-replay-playbook.md`
+- `references/delivery-gate-playbook.md`
+
+Must conclude:
+
+- one sidecar HTTP 200 or token-shaped output is not downstream acceptance
+- compare sidecar count, order, body-size sequence, content type, response state writes, and next-request state
+- inspect lifecycle, timers, input settle, response-cookie mirroring, or missing sidecar branches before rewriting the algorithm
+- prove the downstream business consumer before calling the collector complete
+
+## Task 20A: Mixed identity tuple causes later route failure
+
+Prompt:
+
+```text
+The root page passes with an impersonated TLS client, but the route-local sidecar and business request fail. The request headers claim one browser major, Client Hints claim another, and the local runtime navigator profile was copied from a third environment.
+```
+
+Expected route:
+
+- `references/transport-pre-gate-playbook.md`
+- `references/iv8-runtime-cheatsheet.md`
+
+Must conclude:
+
+- keep transport impersonation, User-Agent, Client Hints, runtime navigator identity, locale, timezone, and profile fields coherent
+- do not mix headers, TLS profile, and runtime fingerprint data from unrelated browser families unless live evidence proves tolerance
+- a root-page pass does not prove the route, sidecar, or business branch accepts the same incoherent tuple
+- continue application-layer reversing only after transport and identity admission are clean enough
+
+## Task 20B: Foreign high-entropy fingerprint cache is not a runtime input
+
+Prompt:
+
+```text
+The local host runtime only succeeds on the original author's machine. A copied cache includes canvas data URLs, WebGL renderer strings, system colors, screen metrics, and device fields from that host. Can I keep using those values as production inputs?
+```
+
+Expected route:
+
+- `references/iv8-runtime-cheatsheet.md`
+- `references/environment-patch-playbook.md`
+
+Must conclude:
+
+- high-entropy host inputs must be captured on the execution host when they are replay-critical
+- another machine's canvas, WebGL, system color, font, screen, or device-profile cache is only a comparison fixture by default
+- if a captured opaque profile remains in delivery, label it snapshot-driven and report scope and freshness
+- patch only the profile surfaces that evidence proves matter
+
+## Task 20C: Local helper bridge must not own arbitrary egress
+
+Prompt:
+
+```text
+A local challenge executor runs untrusted page JavaScript and its XHR shim is about to forward any same-origin-looking URL, cookies, Authorization, redirects, and large bodies through Python. Tighten the product boundary.
+```
+
+Expected route:
+
+- `references/local-challenge-executor-playbook.md`
+- `references/delivery-gate-playbook.md`
+
+Must conclude:
+
+- Python owns real HTTP and the helper only emits replayable artifacts or narrow request intent
+- build an allowlist from exact URLs discovered by Python on the same session chain
+- strip helper-controlled Cookie, Authorization, Proxy-Authorization, Host, Connection, and forwarding headers
+- cap method, request count, body and response size, timeout, and redirects
+- reject localhost, private networks, file, data, and arbitrary helper-selected hostnames
+
+## Task 20D: Exit-gated access denial is not an algorithm regression
+
+Prompt:
+
+```text
+The exact same collector alternates between success and Access Denied depending only on proxy node. On a failing node, a real browser on the same exit also cannot open the business document route. Should I rewrite the signer and form serializer?
+```
+
+Expected route:
+
+- `references/troubleshooting-playbook.md`
+- `references/transport-pre-gate-playbook.md`
+
+Must conclude:
+
+- classify the condition as `egress-gated` before changing protocol logic
+- change exit or wait, then rerun the full chain instead of mutating signer, verifier, CSRF, or form fields first
+- if the browser succeeds but protocol fails on the same exit, then compare transport identity coherence, sidecar count, cookie transition, and serialization
+- keep prior successful output separate from fresh failure diagnostics
+
+## Task 20E: Sidecar success is not business success
+
+Prompt:
+
+```text
+The warm-up and telemetry routes return 200 and the final token length looks realistic, but the downstream business API still returns a challenge shell instead of parseable target data. Can I mark the protocol solved?
+```
+
+Expected route:
+
+- `references/delivery-gate-playbook.md`
+- `references/verifier-replay-playbook.md`
+
+Must conclude:
+
+- verifier, telemetry, warm-up, or sidecar success is only an intermediate milestone
+- final acceptance is the downstream business route returning parseable target data or the requested artifact
+- report which sidecar layers passed separately from final business acceptance
+- do not package the collector until the failing delivery gate is resolved or a true external blocker is reported
+
+## Task 20F: Final state value without transition order is not provenance
+
+Prompt:
+
+```text
+I have the final Cookie header and one token value from a successful request, but I did not record the response Set-Cookie, sidecar writes, redirects, or which next request consumed each update. The copied final state works once and then fails on a fresh chain.
+```
+
+Expected route:
+
+- `references/cookie-provenance-playbook.md`
+- `references/reproducible-evidence-playbook.md`
+
+Must conclude:
+
+- record the ordered state machine rather than only final cookie or token values
+- include request state, response writes, next outbound authority, redirects, sidecars, and final business consumer
+- transition order is part of the protocol and can make a correct-looking final value stale
+- normalize or diff the ordered evidence chain before designing regeneration
+
+## Task 21: Supplied JavaScript uses the non-executing AST route
+
+Prompt:
+
+```text
+I supplied one untrusted minified JavaScript asset and only want structural detection plus conservative readability changes. Do not run the source, evaluate decoder calls, or contact the target. Preserve an auditable fallback if parsing or rewriting fails.
+```
+
+Expected route:
+
+- `references/profiles/static-ast/index.md`
+- `references/project-artifact-contract.md`
+
+Must conclude:
+
+- classify the work as artifact-only and keep it offline
+- parse and inspect the source structurally without `eval`, `Function`, `node:vm`, or target-code execution
+- preserve the original, each successful intermediate, hashes, residue metrics, and `lastGoodFile` under the task project
+- keep ambiguous family evidence on the generic conservative pipeline instead of guessing a site adapter
+
+## Task 21A: AST parse failure preserves the exact source
+
+Prompt:
+
+```text
+The supplied JavaScript is truncated and Babel cannot parse it. I still need a deterministic pipeline report and a final artifact, but no recovery step may execute the file or silently invent a successful rewrite.
+```
+
+Expected route:
+
+- `references/profiles/static-ast/index.md`
+
+Must conclude:
+
+- return a failed parse status and bounded error metadata
+- retain `00_source.js` as `lastGoodFile`
+- write `final.js` as the byte-for-byte source fallback
+- keep `targetCodeExecuted` false and do not escalate to dynamic evaluation automatically
+
+## Task 21B: Dynamic rebuild requires a second independent sample
+
+Prompt:
+
+```text
+My Python signer matches one captured request exactly, but its input includes a timestamp, random bytes, session state, and ordered serialization. Can I restore live values and ship after changing only the expected output in a copied fixture?
+```
+
+Expected route:
+
+- `references/pure-python-rebuild-playbook.md`
+
+Must conclude:
+
+- a copied fixture with only expected output changed is not independent evidence
+- capture fixture B from an independent run with at least one decisive input changed
+- require both fixtures before restoring live time, randomness, session, or serialization paths
+- for a textbook primitive, require one public known-answer vector plus one captured application vector
+
+## Task 21C: CryptoJS cipher hooks remain metadata-only
+
+Prompt:
+
+```text
+The page uses CryptoJS.AES.encrypt and decrypt as object methods rather than top-level functions. I need a reversible observation hook, but logs must never include plaintext, passphrases, Key, IV, Cookie, token, or raw ciphertext.
+```
+
+Expected route:
+
+- `references/profiles/browser-hook-snippets/index.md`
+
+Must conclude:
+
+- wrap nested AES, DES, TripleDES, and RC4 encrypt/decrypt methods when they exist
+- log only bounded method, type, and length metadata
+- preserve the original call, return value, `this` binding, and promise or synchronous behavior
+- provide `restore()` and refuse raw argument, key, IV, result, or stack logging by default
+
+## Task 21D: gRPC framing needs length and trailer negative controls
+
+Prompt:
+
+```text
+I have a grpc-web response with several frames, a compression flag, unknown protobuf fields, and a final trailer frame. One parser assumes every nonzero flag means zlib and reads only the first payload. Define the proof needed before decoding business data.
+```
+
+Expected route:
+
+- `references/structured-transport-playbook.md`
+- `scripts/grpc_frame_inspector.py`
+
+Must conclude:
+
+- parse every five-byte frame header as flag plus unsigned big-endian length
+- resolve compression from `grpc-encoding` or active grpc-web evidence rather than assuming zlib
+- distinguish data and trailer frames and preserve unknown fields or raw payload bytes
+- reject truncated headers, oversized lengths, and a tampered flag or trailer boundary before accepting decoded business data
+
+## Task 21E: Crypto primitive names do not define wire formats
+
+Prompt:
+
+```text
+The client mentions SM2, ECDSA, ECDH, xxHash, and a hybrid envelope. A draft implementation mixes SM2 signature integers with C1C3C2 ciphertext, treats ECDSA DER as raw r||s, and omits the hash seed and byte order. Decide the validation contract.
+```
+
+Expected route:
+
+- `references/crypto-patterns.md`
+
+Must conclude:
+
+- distinguish primitive identity from signature, key, ciphertext, and envelope encoding
+- record SM2 component order, ECDSA DER versus fixed-width raw form, ECDH point encoding and KDF, and checksum seed, width, and byte order
+- verify primitive output separately from KDF, nonce or IV, authenticated data, component ordering, and final framing
+- keep keys and captured ciphertext task-local while promoting only secret-free layout and verification rules
+
+## Task 21F: Narrow env runtime contracts stay explicit and bounded
+
+Prompt:
+
+```text
+A known local fixture needs linked MessageChannel delivery, both Image load handler styles, one named webpack chunk array, and browser-compatible Latin1 btoa. I do not want a broad browser emulator or a global scan.
+```
+
+Expected route:
+
+- `references/profiles/env-patch/index.md`
+- `references/profiles/env-patch/references/runtime-contracts.md`
+
+Must conclude:
+
+- use linked asynchronous ports rather than no-op MessageChannel stubs
+- dispatch one Image load event to both `onload` and `addEventListener('load', ...)`
+- capture bounded chunk and module IDs only from an explicitly evidenced array name, then restore `push`
+- verify `btoa("\x00\xffAz") === "AP9Beg=="` and reject code units above `0xff` instead of silently UTF-8 encoding
+
+## Task 21G: One successful job remains an experience candidate
+
+Prompt:
+
+```text
+One target taught a useful reverse rule and I want to add it permanently to Spider King. I have only one successful run, no negative control, and my note currently includes the host, Cookie value, and a copied response body.
+```
+
+Expected route:
+
+- `references/skill-maintenance.md`
+- `references/experience-card-schema.md`
+
+Must conclude:
+
+- keep the one-job lesson in task-local `experience-candidate.json`
+- require two independent reproductions, a secret-free fixture hash, positive oracle, negative control, first divergence, and applicability boundary before promotion
+- strip target identifiers, cookies, tokens, keys, private responses, and endpoint folklore
+- use a promoted card only as a hypothesis accelerator and re-prove one current-target fact
+
+## Task 21H: Specialist handoff cannot widen authority
+
+Prompt:
+
+```text
+The current route found a verifier-owned blocker and an installed specialist may help. Prepare the handoff without allowing concurrent same-target browser control, hidden request retries, broader paths, dependency installs, or raw session values.
+```
+
+Expected route:
+
+- `references/provider-work-order.md`
+- `references/specialist-handoff-contract.md`
+
+Must conclude:
+
+- confirm the specialist in the capability snapshot and name an executable Spider fallback
+- park or release current same-target ownership before transferring `TARGET_ACTIVE`
+- pass only proven facts, artifact paths and hashes, explicit permissions, remaining budget, unknowns, and one acceptance test
+- treat omitted permission as blocked, reference secrets by local path and hash only, and have Spider accept the returned evidence against final delivery gates
+
+## Task 21I: Evidence uses its own completion gate
+
+Prompt:
+
+```text
+I supplied one saved request and asked only which field mutates. Do not contact the target and do not write files. Report the proved mutation point and the limits of this offline evidence.
+```
+
+Expected route:
+
+- `references/delivery-gate-playbook.md`
+- `references/provider-work-order.md`
+
+Must conclude:
+
+- classify the result as artifact-only `evidence`
+- require provenance, a bounded claim, redaction, and explicit unproven live behavior
+- do not require a live endpoint, repeated replay, proof-manifest file, dependency install, or `main.py`
+- do not promote the evidence to local-proof, compact-replay, or collector
+
+## Task 21J: Provider write paths are an enforced allowlist
+
+Prompt:
+
+```text
+The work order permits task-cache writes only under one exact fixture directory. A route wants to write another project-local path because it is still inside the project.
+```
+
+Expected route:
+
+- `references/provider-work-order.md`
+- `references/project-artifact-contract.md`
+
+Must conclude:
+
+- reject `no-write`, unknown write mode, and an empty allowlist
+- resolve the destination and require containment under both the project and one inherited `allowedPaths` entry
+- reject symlinks, junctions, reparse points, hard-link aliases, skill paths, and OS temp
+- require separate path-specific authorization before overwriting stable user files
+
+## Task 21K: Static AST dependencies stay globally isolated
+
+Prompt:
+
+```text
+Run the supplied static AST profile from a clean Skill installation. Babel is not installed, and dependency installation is authorized, but no task may create a local dependency tree in the Skill, task cache, or target project.
+```
+
+Expected route:
+
+- `references/profiles/static-ast/index.md`
+- `references/node-dependency-isolation-playbook.md`
+
+Must conclude:
+
+- resolve and record `npm root -g`, and require it to remain outside every managed project and Skill directory
+- read the allowlisted exact versions from the committed profile manifest and use `npm install --global --ignore-scripts`
+- load the packages through the global CLI, absolute global path, or process-scoped `NODE_PATH`
+- run the profile tests without copying the profile or installing beneath it
+- preserve the committed lockfile and confirm that no target-local `node_modules` or package-manager lockfile was created or changed
+
+## Task 21L: Static validation does not execute candidate code
+
+Prompt:
+
+```text
+Validate a candidate Spider King directory that may contain untrusted Python scripts. I did not authorize executing its self-tests.
+```
+
+Expected route:
+
+- `references/skill-maintenance.md`
+- `scripts/validate_skill.py`
+
+Must conclude:
+
+- default to syntax, structure, routing, and suite validation without subprocess execution
+- require explicit `--run-trusted-self-tests` for the trusted current root
+- isolate trusted self-tests from user site packages and arbitrary environment secrets
+- state that the trusted self-test mode is not an operating-system sandbox
+
+## Task 21M: Browser acquisition roles are capability-aware
+
+Prompt:
+
+```text
+A fresh target needs a fingerprint-protected clean baseline, then initiator and source tracing. The current registry also exposes an optional CDP bridge. Must I choose one product route forever, or activate every browser surface at once?
+```
+
+Expected route:
+
+- `references/startup-triage-playbook.md`
+- `references/tool-playbook.md`
+
+Must conclude:
+
+- classify fingerprint baseline, debugger trace, and CDP bridge as evidence roles selected from the current capability snapshot, not permanent vendor routes
+- use only the roles justified by the next proof and record unavailable methods or fallbacks
+- transfer `TARGET_ACTIVE` ownership sequentially and never drive the same target through multiple browser families concurrently
+- keep every browser or CDP role evidence-only and retain a browser-free Python final path
+
+## Task 21N: The implementation brief is conditional
+
+Prompt:
+
+```text
+For one artifact-only decoder I already chose pure Python and asked for implementation now. A different collector still has unresolved pure-Python versus local-JS options, and the next step would install dependencies and perform live replay. Decide when a formal implementation brief is useful.
+```
+
+Expected route:
+
+- `references/provider-work-order.md`
+- `references/report-templates.md`
+
+Must conclude:
+
+- do not impose a mandatory plan or approval ceremony on bounded evidence, local-proof, or an implementation choice the user already made
+- create a compact implementation brief when `compact-replay` or `collector` work has material implementation ambiguity or would widen runtime, dependency, write, or live authority
+- record the real endpoint, dynamic fields and writers, evidence, candidate forms, chosen boundary, acceptance test, and unresolved risks
+- treat the brief as a decision record; it never grants omitted write, install, execution, account, or egress permission
+
+## Task 21O: Project runtime coherence is explicit
+
+Prompt:
+
+```text
+This collector project requires its own .venv. The current shell may be using a global interpreter, Node is somewhere on PATH, and I want the supplied package-lock fingerprint recorded before a helper runs. Diagnose the environment without assuming one workstation path.
+```
+
+Expected route:
+
+- `scripts/check_reverse_env.py`
+- `references/project-artifact-contract.md`
+
+Must conclude:
+
+- resolve and report the selected project root, interpreter, virtual-environment state, project-local environment coherence, and bounded runtime versions
+- fingerprint only explicitly supplied lockfiles and report a path relative to the bound project without reading arbitrary files
+- warn by default when the interpreter is outside the project environment, and fail only when the user or project explicitly requires that gate
+- never hardcode a drive, profile id, global interpreter ban, or reusable secret into the skill
+
+## Task 21P: Hook timing fallbacks preserve evidence limits
+
+Prompt:
+
+```text
+The target page is already initialized, the installed browser tool has no preload helper, and a post-load fetch hook records nothing. Continue without claiming the request or mutation is absent.
+```
+
+Expected route:
+
+- `references/tool-playbook.md`
+- `references/hook-techniques.md`
+
+Must conclude:
+
+- record preload support and missing optional methods in the capability snapshot instead of fabricating an injection call
+- prefer an early supported breakpoint or an explicitly authorized controlled reload when initialization-time evidence is required
+- label post-load observation as proving only later activity and keep the clean baseline separate from instrumented runs
+- check sibling transports, wrappers, workers, message relays, and the page-owned world before declaring the boundary inactive
+
+## Task 21Q: Collector handoff stays compact and auditable
+
+Prompt:
+
+```text
+The browser-free collector is complete. Give me one concise technical handoff that is enough to rerun and audit it without creating a README, plan, notes file, and duplicate reports for the same facts.
+```
+
+Expected route:
+
+- `references/report-templates.md`
+- `references/delivery-gate-playbook.md`
+
+Must conclude:
+
+- summarize the real endpoint, dynamic field writer and wire slot, session issuance or refresh, and final protocol order
+- record fixed-vector and negative-control results, live replay count when claimed, and the downstream business acceptance oracle
+- state the Python and helper boundary, browser-free and runtime-free truth, saved artifact paths, hashes, and remaining risks
+- redact reusable secrets and keep one canonical compact handoff instead of proliferating duplicate project documents
 
 ## Failure signals
 
@@ -1390,4 +2970,3 @@ Fail the skill revision immediately if it does any of these:
 - ignores transport envelopes or decode chains
 - asks the user for giant manual bundle review instead of narrowing the target
 - returns vague success without replay proof
-- runs a local npm install or creates `node_modules` inside the target project

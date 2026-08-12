@@ -63,4 +63,51 @@ Treat a target as belonging to a familiar family when one or more of these sympt
 - media metadata arrives in one place, but the actual file replay or decryption needs a separately derived key
 - a challenged landing route fails, but a sibling auth, identity, or business route bypasses the same gate cleanly
 
+- the page text says login or `sessionid` participates in signing, but the business list route already returns full data with no session cookie
+- a helper is named `sm3`, `md5`, or `sha*`, standard libraries miss the fixed sample, and environment checks select alternate constants
+- an obfuscator-style string table rewrite changes nothing until member-map objects are expanded and hex keys are normalized
+- Python digest parity fails only on some pages because `ROTL(x, 0)` or another uint32 edge case is wrong
+- login cookies exist and the home page opens, but list or export data belongs to another tenant, shop, supplier, or data range
+- a context switch returns HTTP 200 or success, yet a final identity reread still shows the previous scope
+- operators choose a display name, while activation requires a live authorization code or resource value with exactly one match
+- concurrent workers share one session and keep switching shops or suppliers, then read each other's data
+- RSA or password-login errors look like bad credentials until ciphertext encoding length or alphabet is checked
+- short-lived login handoff tickets were saved as durable cookies and later fail replay
+- an export or report create returns HTTP 200, but history gains no new task id
+- polling immediately finds a successful task whose time range or fields belong to an older run
+- regenerate or retry works, while first-create still fails or creates nothing
+- downloaded file opens, yet column count is lower than the requested custom field set
+- a mailbox or SMS code is accepted only when taken after a fresh send baseline, and code length differs by scene
+- risk or signature errors disappear only after method, content-type, or body placement is aligned with the signer input
 If the symptoms match, reuse the methodology even when the exact site and parameter names differ.
+
+## Contents
+
+- [JSON API returns full challenge HTML](#json-api-returns-full-challenge-html)
+- [Same param is sometimes short and sometimes long](#same-param-is-sometimes-short-and-sometimes-long)
+- [Impersonation changes which wall you hit](#impersonation-changes-which-wall-you-hit)
+
+## JSON API returns full challenge HTML
+
+If a business data route responds with HTML challenge chrome, linked challenge scripts, or inline bootstrap blobs:
+
+- do not stop at "endpoint blocked"
+- treat it as challenge-state bootstrap on the business route
+- harvest redirect URL or cookies on the same session chain
+- route to `references/challenge-artifact-harvest-playbook.md` and `references/local-challenge-executor-playbook.md`
+
+## Same param is sometimes short and sometimes long
+
+If one field name shows disjoint length bands across research and live success samples:
+
+- assume dual writers until proven otherwise
+- compare success wire shape before packaging a generator
+- route to `references/dual-writer-param-playbook.md`
+
+## Impersonation changes which wall you hit
+
+If plain clients get one verifier wall and impersonated clients get JS challenge HTML or a cleaner route:
+
+- fix transport admission before deep algorithm work
+- keep the admitted profile on the whole challenge and replay chain
+- route to `references/transport-pre-gate-playbook.md` when transport fails first

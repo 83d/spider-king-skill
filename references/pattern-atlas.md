@@ -2,6 +2,36 @@
 
 Use this file when the target already resembles a recurring pattern and you want the shortest proven first move.
 
+## Contents
+
+- [Pattern A: The endpoint on the page is fake](#pattern-a-the-endpoint-on-the-page-is-fake)
+- [Pattern B: The business param is a decoy](#pattern-b-the-business-param-is-a-decoy)
+- [Pattern C: Standard helper is patched](#pattern-c-standard-helper-is-patched)
+- [Pattern D: First response is not data, but bootstrap](#pattern-d-first-response-is-not-data-but-bootstrap)
+- [Pattern E: Only one page breaks](#pattern-e-only-one-page-breaks)
+- [Pattern F: Answer or data is account-bound](#pattern-f-answer-or-data-is-account-bound)
+- [Pattern G: Tiny side assets carry the whole signer](#pattern-g-tiny-side-assets-carry-the-whole-signer)
+- [Pattern H: Dynamic fonts hide the payload](#pattern-h-dynamic-fonts-hide-the-payload)
+- [Pattern I: One-shot verifier, captcha, or click challenge](#pattern-i-one-shot-verifier-captcha-or-click-challenge)
+- [Pattern I2: Cloud verifier multi-stage transcript](#pattern-i2-cloud-verifier-multi-stage-transcript)
+- [Pattern J: Response data is encoded, compressed, or split](#pattern-j-response-data-is-encoded-compressed-or-split)
+- [Pattern K: Transport is GraphQL, WebSocket, or a binary envelope](#pattern-k-transport-is-graphql-websocket-or-a-binary-envelope)
+- [Pattern L: Public page still hides a bootstrap envelope](#pattern-l-public-page-still-hides-a-bootstrap-envelope)
+- [Pattern M: Stateful WebSocket session with encrypted business frames](#pattern-m-stateful-websocket-session-with-encrypted-business-frames)
+- [Pattern N: Challenge-generated state gates a shared envelope family](#pattern-n-challenge-generated-state-gates-a-shared-envelope-family)
+- [Pattern O: Pagination route pivots mid-sequence](#pattern-o-pagination-route-pivots-mid-sequence)
+- [Pattern P: Parsed attributes lie about replay-critical routes](#pattern-p-parsed-attributes-lie-about-replay-critical-routes)
+- [Pattern Q: Transport pre-gate blocks the clean baseline](#pattern-q-transport-pre-gate-blocks-the-clean-baseline)
+- [Pattern R: Challenge runtime already knows the answer](#pattern-r-challenge-runtime-already-knows-the-answer)
+- [Pattern S: Business response is a refresh contract](#pattern-s-business-response-is-a-refresh-contract)
+- [Pattern T: Login and business context are separate states](#pattern-t-login-and-business-context-are-separate-states)
+- [Pattern U: Activation looks successful but the data-range is stale](#pattern-u-activation-looks-successful-but-the-data-range-is-stale)
+- [Pattern V: Display labels are not protocol ids](#pattern-v-display-labels-are-not-protocol-ids)
+- [Pattern W: Create returns success but no new export task](#pattern-w-create-returns-success-but-no-new-export-task)
+- [Pattern X: Polling reuses a historical successful task](#pattern-x-polling-reuses-a-historical-successful-task)
+- [Pattern Y: First-create and regenerate are different contracts](#pattern-y-first-create-and-regenerate-are-different-contracts)
+- [Pattern Z: Challenge rewrites the business URL](#pattern-z-challenge-rewrites-the-business-url)
+
 ## Pattern A: The endpoint on the page is fake
 
 Symptoms:
@@ -81,11 +111,14 @@ Symptoms:
 - page text mentions `sessionid`
 - different accounts produce different sums or answers
 - submit works only with the same session that collected the data
+- or the opposite trap: page text claims session participates in signing, yet the list route already returns full data anonymously
 
 Action:
 
-- make `sessionid` explicit in the collector
-- keep fetch and submit under the same account
+- prove the claim from wire behavior before hardcoding session material into the signer
+- make required session inputs explicit only for the chains that need them
+- keep fetch and submit under the same account when the answer is account-bound
+- split anonymous collection from login-only submit when the wire shows that split
 - verify with the same session before blaming signer logic
 
 ## Pattern G: Tiny side assets carry the whole signer
@@ -127,6 +160,25 @@ Action:
 - treat the verifier output as the real dynamic parameter
 - solve and replay the verifier in protocol form
 - do not simulate clicks in the final solution
+
+## Pattern I2: Cloud verifier multi-stage transcript
+
+Symptoms:
+
+- final verify is only one step in a longer ordered chain
+- device, warm-up, log, or telemetry hosts fire before acceptance
+- complete profile baseline and later sparse or delta packets must agree
+- HTTP 200 or sidecar upload success still ends in risk-like rejection
+- business URL accepts only after a same-round grant is attached
+
+Action:
+
+- freeze init -> sidecars -> verify -> first downstream consumer as one transcript
+- build a one-variable ablation matrix before answer or track tuning
+- enforce shared baseline and sparse delta consistency
+- separate structure, sidecar, timeline, answer, and environment risk surfaces
+- package dual-runtime helpers only as local compute, with Python owning HTTP
+- read `references/verifier-replay-playbook.md`, `references/verifier-error-localization-playbook.md`, and `references/positive-sample-hygiene-playbook.md`
 
 ## Pattern J: Response data is encoded, compressed, or split
 
@@ -281,3 +333,123 @@ Action:
 - stub only the minimal success response the runtime expects after local interception
 - if runtime egress already exposes the authoritative outbound `Cookie` header, harvest that exact header before over-reversing individual cookie writers
 - hand the harvested artifact back to Python for the real HTTP replay, and retry with fresh bootstrap when challenge bundles are version-randomized
+
+## Pattern S: Business response is a refresh contract
+
+Symptoms:
+
+- the business endpoint returns HTTP 200 or an application subcode plus fields such as seed, timestamp, name, nonce, or refresh offsets
+- retrying the same URL family works after those response fields are merged with one locally derived token, cookie, or header
+- the local cookie jar looks close, but the exact outbound `Cookie` header or header bundle still decides success
+- the helper depends more on original site JS plus narrow host patches than on business payload semantics
+
+Action:
+
+- treat the response payload as refresh state, not a generic failure
+- freeze one fail -> refresh -> success triplet on one session chain
+- retry the same business route before hunting alternate endpoints
+- update server-issued seed fields and locally derived replay fields as one bundle
+- compare request-egress artifacts, especially the full outbound `Cookie` header, against the stored jar
+- keep any local runtime narrow, pinned, and self-contained
+
+## Pattern T: Login and business context are separate states
+
+Symptoms:
+
+- account login works
+- home page opens
+- data still belongs to the wrong tenant, shop, supplier, or org
+
+Action:
+
+- split account authentication from business-context activation
+- validate every required identity layer before export or scrape
+- read `references/multi-context-session-playbook.md`
+
+## Pattern U: Activation looks successful but the data-range is stale
+
+Symptoms:
+
+- switch or update-session returns 200 or success
+- tenant or role looks right
+- scoped data still reflects a previous or empty range
+
+Action:
+
+- compare the full activation payload, including type and value fields
+- reread identity from an authoritative final surface
+- treat silent incomplete activation as failure
+
+## Pattern V: Display labels are not protocol ids
+
+Symptoms:
+
+- operators select a human-readable name
+- wire requests need codes, resource ids, or authorization values
+- wrong or ambiguous name resolution creates a wrong-context session
+
+Action:
+
+- use labels only to locate rows in a live authorization response
+- submit protocol ids, not display text
+- require exactly one match; stop on zero or many
+
+## Pattern W: Create returns success but no new export task
+
+Symptoms:
+
+- create or submit returns HTTP 200
+- history shows no new task id
+- later code still "finds" a successful row
+
+Action:
+
+- snapshot task ids before create
+- require a new id or explicit create-returned id
+- re-diff method, body placement, content-type, and signer coverage
+- read `references/async-export-job-playbook.md`
+
+## Pattern X: Polling reuses a historical successful task
+
+Symptoms:
+
+- export finishes too fast
+- time range or fields belong to an older run
+- pre-create history already contained the chosen task id
+
+Action:
+
+- never take history row zero as this run
+- prefer create-returned id, else only post-create new ids
+- require filter and field-set match
+
+## Pattern Y: First-create and regenerate are different contracts
+
+Symptoms:
+
+- regenerate or retry works with one method or body shape
+- first create still fails or creates nothing
+- signer was built from the wrong sample
+
+Action:
+
+- capture first-create separately from regenerate
+- keep method, query, body, and signer inputs on the same proven sample
+- leave first-create unproven rather than promoting regenerate folklore
+
+## Pattern Z: Challenge rewrites the business URL
+
+Symptoms:
+
+- business JSON API first returns challenge HTML instead of data
+- successful retry uses the same route plus a long verifier query param
+- short offline tokens for the same param name fail live
+- helper or runtime navigates to a rewritten URL before business JSON appears
+
+Action:
+
+- freeze fail -> challenge assets -> success on one session chain
+- harvest redirect or navigation URL before deep encrypt reverse
+- use a local challenge executor when needed
+- prove whether app signer headers are still required after rewrite
+- read `references/challenge-artifact-harvest-playbook.md`, `references/local-challenge-executor-playbook.md`, and `references/dual-writer-param-playbook.md`

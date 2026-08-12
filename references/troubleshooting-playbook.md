@@ -2,6 +2,14 @@
 
 Use this file when replay logic almost works but still fails.
 
+## Contents
+
+- [Symptom routing](#symptom-routing)
+- [Multi-context login and activation](#multi-context-login-and-activation)
+- [Async export and report download](#async-export-and-report-download)
+- [Verifier and sample hygiene](#verifier-and-sample-hygiene)
+- [Final rule](#final-rule)
+
 ## Symptom routing
 
 ### `403`, `412`, `429`
@@ -12,6 +20,7 @@ Use this file when replay logic almost works but still fails.
 - compare sign freshness
 - compare whether the challenged document URL itself succeeds after local bootstrap instead of after a guessed API pivot
 - if failures start only after hooks or breakpoints, suspect observer effect and recapture a clean baseline
+- if the same implementation succeeds or fails by exit, browser-check the same route on the same exit before rewriting protocol logic
 
 ### `200` with business error
 
@@ -89,6 +98,14 @@ Use this file when replay logic almost works but still fails.
 - suspect punitive disguise or abuse cooldown when a field-looking error appears only after repeated attempts
 - prefer cookie refresh or existing-session reuse over aggressive relogin loops when the target is rate-sensitive
 
+### intermittent access denied or route reset by exit
+
+- keep implementation, session shape, and target route fixed while changing only the network exit or cooldown
+- browser-check the document or business route on the same exit before blaming local signer, verifier, CSRF, or form serialization
+- if browser and protocol both fail on that exit, label the condition `egress-gated` and change exit or wait; do not rewrite algorithms first
+- if browser succeeds but protocol fails, compare transport identity coherence, sidecar count, cookie transitions, and exact request serialization
+- save the last successful output separately from fresh failure diagnostics so a bad exit does not overwrite accepted proof
+
 ### error or subcode shifts as each patch lands
 
 - treat the changing sequence as evidence that one gate has been cleared and the next gate is now exposed
@@ -96,6 +113,99 @@ Use this file when replay logic almost works but still fails.
 - update the missing-gate hypothesis before rewriting the signer, wrapper, or bootstrap from scratch
 - use the new code to decide whether the next move is cookie provenance, session admission, wrapper slot placement, verifier state, or simple pacing backoff
 
+
+
+## Multi-context login and activation
+
+### login works, business data is wrong
+
+- confirm tenant, role, and data-range separately
+- reread final identity; do not stop at the switch API envelope
+- route to `references/multi-context-session-playbook.md`
+
+### switch succeeds but scope is unchanged
+
+- diff the full activation payload against a known-good UI capture
+- check whether a type field must accompany the value field
+- refuse export until identity reread matches the task config
+
+### password login looks rejected after a correct password
+
+- verify RSA or other password encoding alphabet and length
+- confirm the modulus and exponent were parsed from the current login page
+- route encoding questions to `references/crypto-patterns.md`
+
+### reused cookies scrape the wrong shop
+
+- run a pre-collection identity probe
+- do not share one session across concurrent context switches
+- re-activate and re-validate before scrape
+
+
+
+## Async export and report download
+
+### create returns 200 but no new task
+
+- diff method, query versus body placement, content-type, and referer
+- confirm signer coverage uses the same serialization
+- snapshot history before and after create
+- route to `references/async-export-job-playbook.md`
+
+### export finishes too fast with wrong dates or fields
+
+- check whether polling reused a pre-create historical task
+- require create-returned id or post-create new id plus condition match
+
+### download is not the expected artifact
+
+- inspect whether the body is JSON error, login page, or challenge page
+- verify magic bytes or content family before parse
+- confirm secondary verify and side-channel material belong to this run
+
+### file parses but columns are incomplete
+
+- compare requested field count to downloaded columns
+- fail closed before persistence
+- re-check whether create dropped the field array during serialization or signing
+
+### side-channel codes keep failing
+
+- baseline mailbox or message cursor before send
+- accept only post-baseline messages
+- do not mix login-scene codes with download-scene codes
+
+## Verifier and sample hygiene
+
+### verifier semantic looks good, business still challenged
+- prove first downstream consumer packaging on the same round
+- check grant placement: query, cookie, header, body, or success alias
+- define business-pass by content fingerprint, not only HTTP status
+- read `references/verifier-replay-playbook.md` downstream consumer contract
+
+### sidecars return 200 but final verify still rejects
+- distinguish transport success from application acknowledgement
+- run the sidecar ablation matrix before track search
+- check shared baseline versus sparse delta consistency
+- read `references/verifier-error-localization-playbook.md`
+
+### ordinary browser passes, automation or protocol fails
+- grade samples: clean-success versus contaminated-failure
+- remove hooks and debug ownership before collecting another positive oracle
+- consider exit reputation and consecutive reject history as environment risk
+- read `references/positive-sample-hygiene-playbook.md`
+
+### reject code changes after each local patch
+- treat code shifts as localization evidence, not random noise
+- map each code to structure, sidecar, consistency, timeline, answer, or environment with one-variable ablations
+- do not import another job's code table as universal truth
+
+### dynamic helper path changed and output broke
+- hash assets and compare helper boundaries before full re-reverse
+- rerun fixed vectors
+- only then rebuild the local helper version
+
 ## Final rule
+
 
 When stuck, route by symptom. Do not randomly mutate five things at once.

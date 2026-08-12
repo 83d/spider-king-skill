@@ -8,6 +8,16 @@ Use this reference when:
 - the same endpoint must be called twice: once to get the challenge and once to get the data
 - a page script exposes a refresh function that can be rerun to renew cookies or request parameters
 
+## Contents
+
+- [1. Recognize the pattern](#1-recognize-the-pattern)
+- [2. What to capture](#2-what-to-capture)
+- [3. Fastest stable strategy](#3-fastest-stable-strategy)
+- [4. Minimal sandbox checklist](#4-minimal-sandbox-checklist)
+- [5. Parsing the result](#5-parsing-the-result)
+- [6. Delivery recommendation](#6-delivery-recommendation)
+- [7. Verification checklist](#7-verification-checklist)
+
 ## 1. Recognize the pattern
 
 Typical flow:

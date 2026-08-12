@@ -1,471 +1,350 @@
 ---
 name: spider-king
-description: Reverse hostile web clients into pure-protocol collectors with Python-first delivery. Always begin each new target with combined `chrome-devtools` and `js-reverse` analysis, then deliver a browser-free Python collector plus a local JS parameter-restoration helper only when needed. Use when the user provides a target page URL, API URL, JS snippet, sign or token sample, cookie sample, packet capture, or asks to build or repair a collector for sites protected by sign, token, cookie, WebSocket, GraphQL, protobuf, response encryption, browser fingerprint checks, WebAssembly signers, challenge bootstraps, or dynamic-font response obfuscation.
+description: Reverse hostile web clients into pure-protocol collectors with Python-first delivery. For a fresh live target, begin with sequential `chrome-devtools` and `js-reverse` evidence; for artifact-only input, analyze the supplied request, packet capture, JavaScript, WASM, token, or cookie sample without inventing browser proof; for a continuation, reuse the current gate when its target and environment are unchanged. Deliver a browser-free Python collector plus a tiny local helper only when needed. Use for hostile sign, token, cookie, WebSocket, GraphQL, protobuf, response-decode, browser-fingerprint, WebAssembly, challenge-bootstrap, or dynamic-font flows.
 ---
 
 # Spider King
 
-## Role
+## Mission
 
 Turn hostile web clients into stable protocol collectors.
 
-This skill is not a browser automation skill.
-This skill is a protocol recovery skill.
-
-Default posture:
-
-1. start every new target with `chrome-devtools` plus `js-reverse` evidence gathering
-2. find the real request
-3. identify the true changing state
-4. rebuild that state offline
-5. deliver a browser-free Python collector, plus a local JS parameter helper only when truly needed
+This is a protocol-recovery skill, not a browser-automation skill. Use browser tooling only to gather evidence. Deliver raw HTTP plus narrow local sign, bootstrap, decode, or transport helpers.
 
 ## Non-Negotiables
 
-- Final delivery must be pure protocol: raw HTTP plus local signer, local decoder, or local bootstrap helper only.
-- Every new target must be analyzed first with both `chrome-devtools` and `js-reverse` before writing the final collector.
-- Do not ship Playwright, Selenium, CDP page-driving, or submit-through-browser flows as the solution.
-- Final delivery must run fully outside the browser: Python crawler scripts for collection, plus a local JS helper only for parameter, sign, token, or cookie reconstruction when Python porting is not yet the safest choice.
-- Prefer Python for the collector and orchestration.
-- Only keep a tiny isolated JS or WASM helper when a verified Python port is not yet cheaper, safer, or faster to maintain.
-- Any JS helper must run locally without page driving, `document`, `window`, manual clicks, browser profiles, or hidden browser dependencies.
-- If browser tooling is used at all, use it only for recon and evidence gathering, never as a hidden dependency in the final collector.
-- Automation is forbidden as the final answer, forbidden as a fallback answer, and forbidden as a disguised "temporary" delivery path.
-- Recover one stable request before scaling pagination, concurrency, or submission.
-- Every conclusion must be backed by artifacts: request samples, fixed-input helper outputs, cookies, headers, and replay proof.
-- Never install Node.js analysis dependencies into the target project or any of its subdirectories. Use pinned global installs under `npm root -g` and follow `references/node-dependency-isolation-playbook.md`.
-- Stay in one execution loop until you reach protocol delivery or hit a real external blocker.
+<!-- 83D-OVERLAY:node-dependency-isolation:start -->
+- **83d fork override — global-only Node dependency isolation:** install pinned Node.js analysis dependencies only beneath the resolved `npm root -g`; never create or replace `node_modules` or a package-manager lockfile in the target project, task cache, skill directory, or any of their descendants. This fork rule supersedes upstream task-local npm installation guidance. Follow `references/node-dependency-isolation-playbook.md` before any Node.js dependency installation.
+<!-- 83D-OVERLAY:node-dependency-isolation:end -->
+
+- Start every fresh live target classified as `live-target` with evidence from both `chrome-devtools` and `js-reverse`. If either tool is unavailable, report the blocker before claiming the live target is understood.
+- Keep browser evidence collection target-serial: at most one tool family may be `TARGET_ACTIVE`, and never place both families in the same parallel tool batch. Apply the handoff gate in `references/tool-playbook.md`; preserve unique unreplayable state with `RETAINED_EXCEPTION` instead of destroying it for cleanup.
+- For `compact-replay` and `collector`, deliver a browser-free Python run path. Never use browser automation, Playwright, Selenium, CDP page-driving, page-context fetch, browser profiles, or manual browser state as the final replay path or fallback.
+- Prefer pure Python for HTTP, orchestration, parsing, retries, persistence, and output.
+- Keep JS or WASM only as a tiny local helper when a verified Python port would currently be riskier. Helpers must not depend on live `window`, `document`, browser storage, page driving, or manual clicks.
+- A local bootstrap executor may emulate required host semantics, but Python must own live HTTP. State clearly whether delivery is browser-free only or fully runtime-free.
+- Recover one stable business request before pagination, concurrency, submission, or runtime shrinking.
+- Back every conclusion with the evidence its declared shape requires. Require repeated live replay only when claiming current live acceptance. Keep raw sensitive values local; redact credentials, tokens, personal data, and cookie values from chat, reports, and version control.
+- Never hardcode rotating state before proving its writer, slot, scope, expiry, and refresh path.
+- Preserve one session chain for bootstrap-heavy flows until cross-session reuse is proven.
+- Stop only when the declared shape passes its capability-specific gate or a real external blocker is proved. Do not label `evidence` or `local-proof` as a collector, and do not disguise incomplete automation as a temporary collector.
+- `compact-replay` and `collector` delivery include a PyCharm right-click runnable Python entrypoint, normally project-root `main.py` or `collector/main.py`, with no required terminal arguments. `evidence` and `local-proof` do not require an entrypoint unless the requested artifact is executable code.
+
+For failure-shaped counterexamples, read `references/anti-patterns-playbook.md`. Before packaging a result, apply only the matching capability gate from `references/delivery-gate-playbook.md`.
+
+## Lightweight Dispatch
+
+Use these labels internally to keep the first move small. Do not force a rigid machine header in normal user replies.
+
+| Shape | Deliverable |
+|---|---|
+| `evidence` | real request, initiator, state source, mutation point, or precise blocker |
+| `local-proof` | fixed vectors, decoded sample, restored source, or callable helper without live egress |
+| `compact-replay` | one bounded right-click runnable replay for a proved request |
+| `collector` | repeatable browser-free Python collector with bounds |
+
+Default to the smallest shape that answers the user. User-provided HAR, packet capture, request text, JS/WASM, cookie/token sample, fixed vector, or existing project artifact starts as `evidence` or `local-proof`; do not open a browser just to satisfy live-target ceremony. A bare URL by itself does not authorize browser navigation, live replay, writes, account/session use, dependency installation, or broad collection.
+
+Route names describe the current capability owner, not the gate family: `evidence-reuse`, `chromium-recon`, `browser-hook`, `static-ast`, `env-patch`, `iv8-local-runtime`, `verifier`, `transport`, `pure-python-rebuild`, or `python-collector`. Run one route until it returns evidence or a named blocker. If two routes look plausible, pick the smaller offline route first and record what proof would justify escalation.
+
+Before any route writes files, sends live egress, executes target-supplied code, uses account/session state, installs dependencies, or changes runtime state, apply the compact contract in `references/provider-work-order.md`.
+
+## Fast Routes and Ownership
+
+Use a focused route when the goal is already narrow. Do not restart full unknown-target discovery for these cases.
+
+| Current goal | Route |
+|---|---|
+| Paste-ready browser observation Hook at a known boundary | `references/profiles/browser-hook-snippets/index.md` |
+| Structured Babel AST restoration of a supplied JS file | `references/profiles/static-ast/index.md` |
+| Known entry + invocation + fixed browser output in Node/VM | `references/profiles/env-patch/index.md` |
+| Fixed-trace pure-Python signer/decoder rebuild or regression | `references/pure-python-rebuild-playbook.md` |
+| Unknown or multi-layer end-to-end collector | Continue Startup Gate + Universal Reverse Loop below |
+| Entry/call-chain location only | Dedicated reverse skill when available; else `chrome-devtools` / `js-reverse` initiator evidence |
+| Explicit Python + iv8 runtime | iv8 skill when available; if unavailable, report the unmet constraint and use env-patch/local helper only after the user accepts that substitution |
+| Confirmed CAPTCHA/TDC or family-owned protocol | Matching specialist skill when available; Spider stays secondary runtime help only |
+
+Focused profile rules:
+
+- Browser-hook, static-ast, and env-patch routes may skip the full unknown-target Startup Gate ceremony only for `artifact-only` or already-proved known-boundary work, but still require reversible changes and secret-safe logs. Structure-only static AST detection may begin from the supplied file alone; require fixed samples before behavioral claims or dynamic escalation. If the route needs fresh interaction with a current target, classify it as `live-target` and apply the paired sequential browser rule above.
+- If a profile uncovers missing bootstrap, session, transport, decode, or pagination state, exit the profile and return to the Universal Reverse Loop.
+- Process artifacts go under the executing project `js_reverse_cache/tasks/<task-id>/` (`task.json`, `network.jsonl`, `runtime-evidence.jsonl`, `handoff.json`, `fixtures/`, `report.md`). Delivery proof remains `analysis/proof_manifest.json` and related analysis files. Never write task secrets into this skill directory. Apply `references/project-artifact-contract.md` before the first save or promotion.
 
 ## Startup Gate
 
-Before any deep tool use on a fresh target, emit a short startup gate and fill it with current evidence.
+Complete and report this gate before deep analysis.
 
-Required checks:
+### 0. Intake mode
 
-1. environment and tool sanity
-   - run `scripts/check_reverse_env.py` when local execution is available
-   - confirm whether both `chrome-devtools` and `js-reverse` are usable
-   - if one tool is blocked, report the blocker before pretending the target is understood
-   - before installing any Node.js dependency, resolve and record `npm root -g`, then scan the target project for pre-existing `node_modules` and package-manager lockfiles
-2. family triage
-   - classify the target first as `signer-gated`, `verifier-gated`, `decode-gated`, or `session-gated`
-   - add the secondary tag `transport-gated` when TLS, ALPN, UA, HTTP version, or route-local admission blocks the clean baseline before application semantics are visible
-   - read `references/startup-triage-playbook.md` before loading giant bundles
-   - if the next move would widen the runtime, patch surface, or transport profile, read `references/escalation-ladder-playbook.md` before jumping layers
-   - if a rotating cookie appears important, read `references/cookie-provenance-playbook.md` before hardcoding anything
-3. delivery intent
-   - state the intended final shape: pure Python, Python plus tiny JS helper, Python plus tiny WASM helper, or Python plus local bootstrap executor
-   - explicitly reject browser-backed fetches, browser profiles, and automation-driven replay as the final answer
+Declare one mode before tool use:
 
-Rule:
+- `live-target`: a current page or endpoint needs fresh browser and wire evidence; apply the paired sequential browser workflow
+- `artifact-only`: only saved requests, packet captures, source, JS, WASM, tokens, cookies, fixed vectors, or response samples are available; analyze them locally and label live acceptance, current endpoint behavior, and runtime provenance as unproven
+- `continuation`: the same target, session assumptions, tool registry, and delivery goal remain current; reuse the existing gate and reopen only evidence surfaces changed by the new input. Before reopening a long reverse, scan the workspace for an existing pure-protocol collector or challenge helper for the same target family.
 
-- if the startup gate is incomplete, the target is not yet understood
-- if the classification changes after new evidence, restate the gate instead of silently drifting
+If the user gives both a URL and sufficient offline artifacts, treat the next step as artifact-led until live proof is explicitly needed. If the user asks only for evidence, local proof, or "do not go online", do not ask for replay budget, project root, browser approvals, or collection scope unless a gated action is the smallest next move.
 
-## What This Skill Optimizes For
+### 1. Environment and tools
 
-- protocol-first reverse engineering
-- Python-first delivery
-- offline reproduction of dynamic state
-- reusable collectors instead of one-off lucky requests
-- generic methodology that transfers across similar targets
+- Run `scripts/check_reverse_env.py` when local execution is available.
+- Select browser acquisition roles from the capability-aware matrix in `references/startup-triage-playbook.md`: fingerprint baseline, debugger trace, or an approved CDP bridge. Roles may hand off sequentially; they never override the single-`TARGET_ACTIVE` rule or justify a browser-backed final path.
+- For `live-target`, confirm both `chrome-devtools` and `js-reverse` with an agent-side schema or capability check that does not open the target in both tools; record a capability snapshot of available methods and browser modes. The local Python script cannot prove MCP or plugin availability.
+- For `live-target`, start target interaction with the Chrome baseline phase. Defer the first `js-reverse` target action until the Chrome handoff gate is complete.
+- For `artifact-only`, do not start browsers merely to satisfy a live-target gate. Report which live evidence surfaces remain unavailable.
+- For `continuation`, refresh the capability snapshot only when the tool registry, browser mode, or target context changed.
+- Note whether Node, `iv8`, `curl_cffi`, curl, or another narrow local runtime is available when relevant.
 
-## Knowledge Modules
+### 2. Family triage
 
-Keep this entry file lean and route to focused references as soon as the symptom is clear.
+Choose the primary application family supported by at least two evidence surfaces:
 
-Load only the module you need:
+- `signer-gated`: request fields or wrappers must be regenerated.
+- `verifier-gated`: challenge, warm-up, telemetry sidecars, or verifier state gates the business request.
+  If a business JSON endpoint returns challenge HTML or linked challenge scripts, route to challenge artifact harvest and dual-writer checks before deep signer work.
+  Hard order for this family (do not skip):
+  1. freeze one full ordered transcript: init/load -> required sidecars -> final verify -> first downstream consumer
+  2. inventory sidecars and state writes
+  3. one-variable ablation matrix (omit/block/restore)
+  4. shared baseline + sparse delta consistency
+  5. real wall-clock timeline vs declared event time
+  6. platform-specific verifier semantics (not HTTP 200 alone)
+  7. first downstream consumer packaging
+  8. only then behavior/track/answer tuning
+  Hard bans before the earlier rungs pass:
+  - no trajectory or answer-parameter search before sidecar inventory and ablation
+  - no treating automation-browser hand-slide failures as algorithm failure before clean positive-sample hygiene
+  Read `references/verifier-replay-playbook.md`, `references/verifier-error-localization-playbook.md`, and `references/positive-sample-hygiene-playbook.md`.
+- `decode-gated`: HTTP succeeds but the response needs a local decode chain.
+- `session-gated`: login, pairing, counters, heartbeats, keys, transcript order, or post-login business-context activation controls success.
 
-- `references/doctrine-index.md` for family-level debugging rules and protocol posture
-- `references/symptom-heuristics.md` when the target still smells broad and you need fast family matching
-- `references/pattern-atlas.md` when the target already fits a recurring pattern and you want the shortest proven first move
-- `references/workflow-overview.md` for the shortest end-to-end execution map
-- `references/node-dependency-isolation-playbook.md` before installing any Node.js analysis dependency
+Add `transport-gated` as a secondary tag when TLS, ALPN, HTTP version, UA family, client stack, or route-local admission fails before application semantics are visible.
 
-The `references/` directory is the real knowledge base.
-The entry `SKILL.md` should route, not restate every doctrine in full.
+Read `references/startup-triage-playbook.md`. Use `references/symptom-heuristics.md` for broad symptoms, `references/pattern-atlas.md` for known shapes, and `references/doctrine-index.md` for family-level rules. If the family changes, restate the gate instead of silently drifting.
 
-## Reference Layout
+### 3. Delivery intent
 
-- root-level playbooks own reusable workflows
-- doctrine and heuristics live in dedicated routing references
-- site-specific lessons should be abstracted back into generic references, not left in the entry file
+Declare the smallest acceptable final shape and implementation form:
+
+1. pure Python
+2. Python plus tiny local JS helper
+3. Python plus tiny local WASM helper
+4. Python plus local bootstrap executor
+5. Python plus local decoder
+
+Explicitly reject browser-backed replay and profile-bound operation.
 
 ## Minimal Intake
 
-Start immediately if the user already provided enough evidence.
+Start immediately when the user provides a target page or API URL, site and collection goal, captured request, JS or WASM sample, cookie or token sample, or packet capture. Choose the intake mode before deciding whether browser evidence is required.
 
-Otherwise ask only for the smallest missing set:
+Ask only for missing information that changes implementation: target fields, collection scope, output format, login requirement, and whether dedupe, resume, or incremental sync is required.
 
-- target page URL, or
-- target API URL, or
-- site homepage plus collection goal, or
-- captured request sample, or
-- JS snippet, obfuscated bundle, cookie sample, sign sample, or packet capture
+For read-only evidence or local-proof requests, ask only for the missing sample, vector, trigger action, or source path. Delay project-root, retention, live replay, and request-budget questions until the next action would write, execute target code, or contact the target.
 
-Only ask follow-ups that change implementation:
-
-- target fields
-- scope: single page, pagination, category, date range, or whole site
-- output format: JSON, CSV, Excel, database, or API sink
-- whether login is required
-- whether incremental sync, dedupe, or resume is required
+Before implementing a `compact-replay` or `collector`, use the conditional implementation brief in `references/provider-work-order.md` when multiple implementation forms remain viable or the next step would widen the currently resolved runtime, dependency, writable-scope, or live-authority boundary. Do not turn that brief into a mandatory approval ceremony for `evidence`, `local-proof`, or an implementation choice the user already made.
 
 ## Universal Reverse Loop
 
-### Phase 0: Fingerprint before deep work
+Use `references/workflow-overview.md` as the short execution map and `references/tool-playbook.md` for tool selection.
 
-Classify the target before reading giant bundles:
+### Phase 0: Fingerprint
 
-- decoy endpoint vs real endpoint
-- transport-pre-gated baseline vs application-visible baseline
-- wrapper rewrite vs visible param
-- patched helper vs standard helper
-- simple decodable formula vs browser-host-bound bootstrap vs true interaction dependency
-- exposed getter vs self-submitting challenge runtime vs alternate-route bypass
-- signer-gated vs verifier-gated vs decode-gated vs session-gated
-- bootstrap asset vs direct data API
-- plain JSON vs GraphQL vs WebSocket vs binary envelope
-- single-shot replay vs stateful session with pairing, auth, or warm-up frames
-- direct response vs encoded response vs glyph-mapped response
-- page-specific exception vs whole-flow exception
-- session-bound vs anonymous
-- clean-baseline-first vs trace-first vs decode-first vs transcript-first
-- rotating-cookie provenance known vs unknown
-- JSVMP or heavy obfuscation vs normal packed bundle
+- Capture a clean baseline before broad hooks when observer effect is possible.
+- Distinguish decoy from real endpoint, transport gate from application gate, visible param from wrapper rewrite, bootstrap asset from data API, and single request from stateful transcript.
+- Identify plain JSON, GraphQL, WebSocket, protobuf, binary envelope, encrypted response, glyph mapping, JSVMP, or host-bound runtime early.
+- Choose the smallest next proof, not the largest bundle dump.
 
-Goal:
+### Phase 1: Prove the real request
 
-- choose the smallest next proof and the least destructive first instrument, not the biggest code dump
+- Follow redirects and wrapper or compatibility pages.
+- Map entry, bootstrap, list, detail, submission, verifier, warm-up, telemetry, download, risk-control, and async export or report job routes separately.
+- Capture exact URL, method, query, body bytes, headers, outbound Cookie header, response shape, and initiator.
+- Treat pagination pivots and challenged document replays as part of the protocol contract.
 
-### Phase 1: Identify the true request path
+Deliver one confirmed request on the real business path.
 
-- follow redirects
-- inspect wrapper pages and compatibility pages
-- separate visible page routes from real wire routes
-- map bootstrap requests, list requests, detail requests, submission requests, and risk-control requests
-- map pagination route transitions separately from the first-page route
-- confirm whether later pages pivot from static filenames to `/ui`, Ajax, or another endpoint family
-- detect whether one endpoint serves both bootstrap and final data in separate phases
-- test whether the challenged document route itself is the real replay target after bootstrap, rather than assuming a separate XHR or API exists
+### Phase 2: Isolate moving state
 
-Deliverable for this phase:
+Classify every changing part: timestamp, nonce, signed query or body, rotating header or cookie, wrapper field, operation name, cursor, bootstrap artifact, decode key, glyph map, session secret, profile baseline, sparse delta, counter, heartbeat, elapsed-time dependency, media key, page exception, account state, or host semantic.
+When the surface is an export or signed open platform style API, also bucket fields into business, static app, server-issued, and per-request dynamic classes before designing regeneration.
 
-- one confirmed request that is definitely on the real business path
-
-### Phase 2: Classify the moving parts
-
-For the real request, classify each changing field:
-
-- static header
-- rotating header
-- static cookie
-- rotating cookie
-- timestamp
-- nonce or random fragment
-- signed body or query
-- transport envelope, operation name, or message type
-- compressed or binary response format
-- decode key, glyph map, or response-side transform
-- encrypted response
-- page-specific exception
-- account-bound session dependency
-- bootstrap artifact dependency
-- browser-host semantic dependency such as lifecycle, timer, cookie, parser-order, or probe-surface state
-- login or pairing bootstrap artifact
-- session key schedule or exported secret material
-- heartbeat, ack, counter, or message-tag state
-- media-key derivation or side-channel download secret
-
-Goal:
-
-- separate what must be reproduced from what is just noise
+Prove cookie provenance and distinguish server-issued artifacts from locally minted filler. Treat page text about session participation as a hypothesis only until wire behavior confirms it. When login is only the first gate, validate tenant, role, and data-range with a final identity reread before export; see `references/multi-context-session-playbook.md`. Keep stored jar state separate from the authoritative outbound Cookie header when they diverge.
 
 ### Phase 3: Locate the canonical mutation point
 
-Look in this order:
+Trace in this order:
 
-1. transport wrappers such as `$.ajaxSetup`, `beforeSend`, fetch wrappers, interceptors
-2. bootstrap side scripts and inline payloads
-3. page-exposed helper functions
-4. WebAssembly exports
-5. server-returned JS challenges
-6. response-side refresh fields that seed the next request
-7. handshake transcripts, frame serializers, binary node encoders, protobuf parsers, or session key schedules
+1. transport wrappers, interceptors, `beforeSend`, fetch, Ajax, XHR, worker, or message boundaries
+2. bootstrap scripts and inline payloads
+3. exposed helpers and returned child objects
+4. WASM exports or inner serializer, packer, signer, or decoder primitives
+5. server-returned challenges and response-side refresh fields
+6. frame serializers, protobuf parsers, handshake transcripts, and key schedules
 
-Rule:
+The canonical mutation point is where the wire-shaped payload actually changes, not where business code creates a placeholder.
 
-- the canonical mutation point is where the wire payload actually changes, not where the business code first creates a placeholder
+When a named digest is present, prove it on fixed inputs before trusting a standard library. Prefer environment-selected digest constants and the browser branch over UI or function names; route to `references/crypto-patterns.md`.
 
-### Phase 4: Rebuild the moving parts offline
+### Phase 4: Rebuild offline
 
-Choose the cheapest valid offline shape:
+- Climb one rung at a time: fixed-input parity, narrow boundary observation, pure local reproduction, narrow host bootstrap, then evidence-backed host-surface patching.
+- Before escalating, record the last proved artifact, exact blind spot, why the next rung is smallest, and how browser-free delivery remains intact.
+- Read `references/escalation-ladder-playbook.md` before widening runtime, patch surface, or transport profile.
+- When transport evidence proves that the closest maintained backend cannot express the admitted browser profile, read `references/native-transport-profile-playbook.md` before building a route-local native adapter.
+- When an opaque staged artifact still depends on captured runtime inputs, read `references/opaque-runtime-profile-playbook.md`; preserve one atomic run, port stage by stage, and distinguish algorithmic generation from snapshot-driven generation or pool replay.
+- Preserve exact serialization, field slot, framing, JSONP callback, delimiter, compression, cipher, and decode order.
+- When porting JS digests to Python, validate uint32 truncation, `ROTL` edge cases, and per-byte packing masks on a frozen preimage before live replay.
+- For string-table-heavy bundles, begin with the non-executing `references/profiles/static-ast/index.md` detector and conservative rewrite, then recover the decoder offline with a two-pass rewrite before deep beautify work; see `references/obfuscation-guide.md` and `references/offline-inline-deob-playbook.md`.
+- Regenerate request-shaped artifacts inside the request loop when page, keyword, body, referer, timestamp, or session state can change them.
 
-1. pure Python
-2. Python plus isolated JS signer
-3. Python plus minimal local JS or WASM helper
-4. Python plus local challenge bootstrap executor
-5. Python plus local font decoder
+### Phase 5: Prove repeatability and scale
 
-Never add browser automation to the final path.
-Escalate only one rung at a time.
-Before moving to a heavier runtime, broader patch surface, or transport exception, record what proof failed at the current rung and why the next rung is the smallest honest move.
-See `references/escalation-ladder-playbook.md` when the next escalation is unclear.
+- Verify helpers and decoders against fixed-input or fixed-payload vectors.
+- Prove one fresh single-page replay on one session chain before scaling or shrinking runtimes.
+- Require repeated live replay at least two to three times; helper load success or plausible token shape is not acceptance.
+- For verifier-gated flows, prove required sidecars, shared-state consistency, actual request timing, final verifier semantics, and the first downstream consumer on one complete round. Keep the hard order above; record an ablation matrix and a local error-semantic map before scaling retries.
+- For verifier-gated flows, prove positive-sample hygiene: clean success samples outrank contaminated automation failures. Environment risk (exit IP, automation marks, consecutive failures) is a separate failure surface from track quality.
+- Prove the next page or cursor, route pivots, refresh behavior, field completeness, and relevant permission boundaries.
+- For async exports, prove create with a pre-create task-id snapshot plus condition match, isolate the polled task, and block persistence when downloaded columns are thinner than requested fields; see `references/async-export-job-playbook.md`.
+- Save raw samples early and fail loudly on unexpected response shapes.
 
-### Phase 5: Prove repeatability
+## Implementation Contract
 
-Do not call it solved until:
+- Split client, settings, bootstrap, headers and cookies, sign, envelope, decode, extraction, retries, storage, and tests by concern.
+- Bind one task project before writing and keep dynamic evidence under `js_reverse_cache/tasks/<task-id>/`; do not use OS temp, Desktop drop folders, the skill directory, or hidden browser profiles as primary storage.
+- Keep stable scaffolding separate from volatile captures and generated runtime blobs.
+- Catalog server-issued and locally computed state separately.
+- Keep bootstrap-heavy acquisition and replay on one session chain until reuse is proven.
+- Treat wire egress as authoritative when it differs from intermediate getters, callbacks, or cookie jars.
+- Test transport admission separately when traffic dies before application semantics.
+- Keep deterministic proof mode separate from live-generation mode.
+- Keep every final helper self-contained and free of runtime-backed predecessor imports.
+- Reuse existing solved helpers only through `references/case-reuse-playbook.md`: match by exact scope or multiple independent signals, run fixed vectors first, and never promote copied secrets or historical notes as current proof.
 
-- the same logic succeeds at least 2 to 3 times
-- pagination advances correctly
-- final fields are complete
-- dynamic state regenerates correctly
-- account-bound constraints are documented
+Use `scripts/scaffold_reverse_project.py` for a Python-first project, `scripts/protocol_diff.py` for request or response deltas, `scripts/transport_profile_diff.py` for structured TLS and H2 profile deltas, `scripts/transform_trace_diff.py` for staged runtime parity, and `scripts/crypto_fingerprint.py` for preliminary encoding or digest hints.
 
-## Pattern Matching
+For reusable evidence, read `references/reproducible-evidence-playbook.md`; use `scripts/evidence_normalizer.py` to create a redacted ordered package, `scripts/transcript_diff.py` to locate the first chain divergence, and `scripts/practice_lab.py` to exercise positive and negative protocol controls offline.
 
-When the target already resembles a recurring case, read `references/pattern-atlas.md` instead of re-deriving the first move from scratch.
+The skill-owned loopback practice lab is deterministic fixture evaluation, not a fresh live target. Probe it with direct HTTP only; do not activate the paired browser Startup Gate for this self-test.
 
-That file owns the short-form patterns for:
+## Verification and Reporting
 
-- decoy endpoints and wrapper mutation
-- bootstrap-first flows and challenge-generated state
-- decode and structured transport problems
-- pagination pivots and raw-source traps
-- transport pre-gates, embedded runtimes, and harvest-first runtimes
+Do not mark complete until every gate relevant to the declared shape passes:
 
-## Tool Priorities
+- Startup Gate is current.
+- For live claims, the real endpoint, canonical mutation point, and moving state are proven.
+- For a fresh `live-target`, both first-pass tool evidence surfaces are recorded; `artifact-only` work states those surfaces as unproven instead of inventing them.
+- Clean-baseline and observer effect risk are handled when relevant.
+- Fixed-input helper or decoder checks pass.
+- Non-empty signs, plausible token length, helper load success, one HTTP `200`, a current cookie jar, or an expired browser export are not acceptance by themselves.
+- Cookie provenance, slot placement, session chain integrity, transport, envelope, decode, stream, pagination, and permission rules are documented when applicable.
+- For `compact-replay` and `collector`, repeated live replay succeeds unless the accepted result is an explicitly bounded offline replay with live acceptance marked unproven.
+- Any final replay or collector runs without browser automation or browser profiles.
+- Output is saved in the requested format.
+- Sensitive artifacts are redacted outside a task-local secret store. A persisted normalized evidence package uses the evidence-specific manifest schema in `references/project-artifact-contract.md`; runnable replay or collector manifests additionally record capability, session scope, helper, and replay evidence without copying secrets. A no-write conversational evidence result does not require a manifest file.
 
-Every fresh target must start with a startup gate, then a lightweight paired analysis pass:
+After each meaningful phase, use the concise phase-delta format from `references/report-templates.md`; use the full templates only for major decisions and final delivery. For `compact-replay` and `collector`, finish with its compact protocol handoff summary rather than creating redundant project documents. Always report family choice, what each available evidence surface proved, real endpoint, moving parts, misleading signals, fixed-input proof, final protocol path, collector/helper split, saved paths, browser-free status, and remaining instability. Add cookie, observer effect, sibling route, envelope-family, decode, session, pagination, or minimal-verifiable-fact details only when relevant.
 
-1. run `scripts/check_reverse_env.py` when local execution is available
-2. use `chrome-devtools` for page state, redirects, visible flow, and one first-pass network view
-3. use `js-reverse` for initiator stacks, source search, wrapper tracing, and first mutation hypotheses
-4. diff captured requests before rebuilding anything
-5. verify helpers on fixed inputs
-6. move to offline execution and local replay only after the first pass is evidence-backed
-
-Do not skip either tool on a fresh target unless a real blocker makes one unavailable, and report that blocker explicitly.
-
-Use deeper browser interaction only when you must observe one redirect chain, sample one fixed helper output, or survive an anti-debug path during analysis.
-The final collector must still be browser-free.
-
-## Bundled Scripts
-
-Use local helper scripts when they shorten repeatable work:
-
-- `scripts/scaffold_reverse_project.py` for protocol-first Python scaffolding
-- `scripts/check_reverse_env.py` for local environment sanity
-- `scripts/crypto_fingerprint.py` for suspicious digest or custom-alphabet classification
-- `scripts/protocol_diff.py` for request and response delta analysis
-
-## Reproduction Decision Tree
-
-Choose delivery in this order:
-
-1. pure Python if all logic is restored
-2. Python plus minimal JS helper if the signer is exact in JS and porting now would add risk
-3. Python plus local WASM helper if the request param comes from a tiny export
-4. Python plus local embedded runtime or bootstrap executor when environment-sensitive JS needs DOM, timer, cookie, or XHR semantics without a real browser
-5. stop and keep reversing if the only remaining path is browser automation
-
-Never choose:
-
-- browser-backed replay as final delivery
-- "works only in my browser profile" as acceptable handoff
-- page-driving submission as the answer when protocol submission exists
-
-## Implementation Rules
-
-Keep the final collector easy to reason about:
-
-- split headers, cookies, signer logic, parsing, retries, output, and persistence by concern
-- keep fixed-input self-checks before live traffic
-- prefer Python first; keep JS or WASM only as a narrow local helper
-- keep live HTTP in Python even when a local runtime helps with bootstrap or parameter recovery
-- keep final helpers self-contained and free of browser-backed imports
-- keep stable scaffolding separate from fresh task-local captures and runtime blobs
-- catalog server-issued artifacts separately from locally computed ones
-- prove cookie provenance before caching rotating cookies
-- keep bootstrap-heavy traces on one session chain until reuse is explicitly proven
-- prove one fresh live replay on one session chain before broad environment patching, pagination scaling, or runtime-shrink work on verifier-gated targets
-- treat wire-shaped egress records as replay authority when they differ from intermediate getters or jar state
-- regenerate request-shaped artifacts per request when page, body, referer, keyword, or timestamp can change them
-- use `page.load`-style bootstrap only when lifecycle, timers, or request hooks matter
-- compare structural metrics when local runtime output diverges from live output
-- inspect native-surface probes before cargo-cult filling globals
-- test transport admission separately when traffic dies before meaningful app semantics appear
-- preserve wrapper framing, JSONP, odd delimiters, and exact serialization rules explicitly
-- distinguish browser-free from runtime-free delivery explicitly whenever an embedded host remains in the loop
-- save raw request and response samples early
-- fail loudly on unexpected response shapes
-
-## Verification Gates
-
-Do not mark complete until the relevant gates pass:
-
-- startup gate completed and updated when the target family changes
-- real request path and moving parts proven
-- first-pass `chrome-devtools` and `js-reverse` evidence captured
-- clean baseline captured before invasive tooling when observer effect matters
-- helpers or decoders verified on fixed inputs
-- server-issued artifacts cataloged before local reimplementation
-- cookie provenance, slot placement, and session-chain integrity proven when they matter
-- transport, decode, envelope, or stream rules documented when present
-- pagination, route pivots, and permission boundaries documented when present
-- local helper load success, lower error volume, or browser-shaped artifacts do not count without repeated live replay
-- live replay succeeds repeatedly
-- final Python collector runs without browser automation or browser profiles
-- if an embedded runtime still remains, the handoff states whether the result is browser-free only or fully runtime-free
-- final JS or WASM helper, if any, stays local and narrow
-- every Node.js analysis dependency is installed under `npm root -g`, and this run created no target-local `node_modules` or package-manager lockfile
-- output is saved in the requested format
-
-## Output Contract
-
-After each meaningful phase, emit short structured reporting instead of vague prose.
-
-Always return:
-
-- which target family won the startup triage and why
-- what `chrome-devtools` proved about the site flow
-- what `js-reverse` proved about the mutation logic
-- what the real endpoint is
-- what the real moving parts are
-- whether observer-effect risk showed up and how it was controlled
-- what the cookie provenance is when cookies mattered
-- what looked server-issued but was actually local filler, if anything
-- what was misleading
-- what was verified with fixed inputs
-- what the final protocol path is
-- whether sibling list, detail, download, or export routes shared one envelope family
-- how the Python collector and JS helper are split
-- confirmation that the final runtime is fully browser-free
-- when Node.js tooling was installed, the global npm root used and confirmation that no target-local dependency tree was created
-- when the target family looks reusable, which 5 to 15 minimal verifiable facts should be preserved for the next upgrade or sibling target
-- where the collector and sample output were saved
-- what still looks unstable, if anything
-
-Use the headings from `references/report-templates.md` when possible.
-
-## Skill Validation
-
-When modifying this skill, validate against:
-
-- `references/official-self-test-task-suite.md`
-- `references/skill-maintenance.md`
-
-Do not call the edit complete until the route stays protocol-first, the entry `SKILL.md` stays lean enough to route instead of restating everything, and the chosen references still match the real symptom.
-
-## Anti-Patterns
-
-When a shortcut looks easier than the next proof, read `references/anti-patterns-playbook.md`.
-That file owns failure-shaped counterexamples and self-checks; this section stays as the short deny-list.
-
-- Do not ask the user to manually inspect giant bundles if tooling can inspect them.
-- Do not skip `chrome-devtools` or `js-reverse` on a fresh target unless you report a real blocker.
-- Do not jump straight to Selenium or Playwright when a direct API exists.
-- Do not install broad hooks before capturing a clean baseline on verifier-gated or behavior-sensitive targets.
-- Do not confuse business-layer params with wire-layer params.
-- Do not trust helper names without fixed-input proof.
-- Do not call browser-only behavior before checking page-specific headers or cookies.
-- Do not hardcode rotating cookies before proving who writes them and how they refresh.
-- Do not bury every concern in one `main.py`.
-- Do not stop after one lucky success.
-- Do not leave a fresh session chain to chase offline patches before one minimal live replay path is proven.
-- Do not mistake helper load success, lower error volume, or plausible cookie shape for protocol completion.
-- Do not ship a browser automation script when the task is protocol-recoverable.
-- Do not hide automation behind words like "temporary collector" or "reliable fallback".
-- Do not leave final JS helpers coupled to `window`, `document`, browser storage, or manual browser state when they can be made local and deterministic.
-- Do not run `npm install`, `pnpm install`, or `yarn install` anywhere inside the target project, including nested helper directories such as `tools/`.
+When a reusable family emerges, preserve 5 to 15 structural facts using `references/minimal-verifiable-facts-playbook.md`. Keep a one-job lesson task-local; after two independent reproductions, use `references/experience-card-schema.md` to promote only the invariant, fixture, positive/negative oracles, and applicability boundary.
 
 ## Reference Router
 
-Start here:
+Load only references that match current evidence, but keep every route directly discoverable here.
 
-- `references/startup-triage-playbook.md` for fresh targets
-- `references/workflow-overview.md` for the shortest end-to-end map
-- `references/anti-patterns-playbook.md` when a shortcut feels faster than evidence
-- `references/escalation-ladder-playbook.md` when a partial proof tempts you to jump to a heavier layer
-- `references/tool-playbook.md` for tool choice and next-step routing
-- `references/report-templates.md` for reporting and handoff shape
+### Core workflow and maintenance
 
-Request path and wrapper mutation:
+- focused Hook / env-patch / pure-Python routes: see Fast Routes and Ownership
+- `references/profiles/browser-hook-snippets/index.md`
+- `references/profiles/static-ast/index.md`
+- `references/profiles/env-patch/index.md`
+- `references/pure-python-rebuild-playbook.md`
+- `references/startup-triage-playbook.md`
+- `references/workflow-overview.md`
+- `references/tool-playbook.md`
+- `references/escalation-ladder-playbook.md`
+- `references/delivery-gate-playbook.md`
+- `references/anti-patterns-playbook.md`
+- `references/report-templates.md`
+- `references/doctrine-index.md`
+- `references/symptom-heuristics.md`
+- `references/pattern-atlas.md`
+- `references/minimal-verifiable-facts-playbook.md`
+- `references/reproducible-evidence-playbook.md`
+- `references/provider-work-order.md`
+- `references/specialist-handoff-contract.md`
+- `references/project-artifact-contract.md`
+- `references/case-reuse-playbook.md`
+- `references/experience-card-schema.md`
 
+### Request path, signers, and obfuscation
+
+- modified standard digests, uint32 ports, fixed-sample crypto: `references/crypto-patterns.md`
+- string-table or obfuscator-style recovery: `references/obfuscation-guide.md`, `references/offline-inline-deob-playbook.md`
 - `references/decoy-and-real-request-playbook.md`
 - `references/transport-wrapper-playbook.md`
 - `references/patched-helper-playbook.md`
-- `references/crypto-patterns.md`
-- `references/obfuscation-guide.md`
+- `references/jsvmp-analysis-playbook.md`
+- `references/opaque-runtime-profile-playbook.md`
 
-Cookies, bootstrap state, and sessions:
+### Cookies, bootstrap state, and sessions
 
+- multi-layer business identity after login: `references/multi-context-session-playbook.md`
 - `references/cookie-provenance-playbook.md`
 - `references/session-contract-playbook.md`
 - `references/public-bootstrap-envelope-playbook.md`
 - `references/challenge-state-envelope-playbook.md`
+- dual writers for one param name: `references/dual-writer-param-playbook.md`
+- local challenge HTML/JS executor contract: `references/local-challenge-executor-playbook.md`
 - `references/server-js-cookie-bootstrap-playbook.md`
 - `references/side-asset-bootstrap-playbook.md`
 
-Host-bound runtime and local execution:
+### Host-bound runtime and observation
 
 - `references/environment-patch-playbook.md`
 - `references/embedded-browser-runtime-playbook.md`
 - `references/iv8-runtime-cheatsheet.md`
-- `references/node-dependency-isolation-playbook.md`
 - `references/challenge-artifact-harvest-playbook.md`
+- prefer redirect URL harvest before encrypt rebuild; see also `references/local-challenge-executor-playbook.md`
 - `references/hook-techniques.md`
 - `references/anti-debug-playbook.md`
 - `references/env-diff-playbook.md`
 
-Transport, decode, and structured payloads:
+### Transport, decode, and structured protocols
 
+- async export, report download, task isolation: `references/async-export-job-playbook.md`
 - `references/transport-pre-gate-playbook.md`
+- `references/native-transport-profile-playbook.md`
 - `references/response-decode-playbook.md`
 - `references/structured-transport-playbook.md`
-- `references/offline-inline-deob-playbook.md`
-- `references/jsvmp-analysis-playbook.md`
+- `references/stateful-stream-e2ee-playbook.md`
 
-Verifiers, pagination, and narrow exceptions:
+### Verifiers, pagination, exceptions, and recovery
 
 - `references/verifier-replay-playbook.md`
+- `references/verifier-error-localization-playbook.md`
+- `references/positive-sample-hygiene-playbook.md`
 - `references/pagination-route-pivot-playbook.md`
 - `references/page-specific-exception-playbook.md`
 - `references/troubleshooting-playbook.md`
 
-Stateful streams and long-lived sessions:
+### Skill validation
 
-- `references/stateful-stream-e2ee-playbook.md`
-
-Maintaining this skill:
-
-- `references/anti-patterns-playbook.md`
-- `references/doctrine-index.md`
-- `references/minimal-verifiable-facts-playbook.md`
-- `references/symptom-heuristics.md`
-- `references/pattern-atlas.md`
 - `references/skill-maintenance.md`
 - `references/official-self-test-task-suite.md`
+- behavioral forward-test execution and independent review: `references/forward-testing-playbook.md`
 
 ## Maintaining This Skill
 
-When a job teaches something reusable:
+Before editing, read `references/skill-maintenance.md`. Validate against `references/official-self-test-task-suite.md` and run `scripts/validate_skill.py` when present. The default validation is static; run `scripts/validate_skill.py --run-trusted-self-tests` only against the trusted current skill root. Use `scripts/validate_skill.py --export-tests <path-outside-skill>` when a machine-readable JSON suite is needed; keep the Markdown suite as the single source of truth. Static PASS is not behavioral proof. For a behavioral non-regression claim, follow `references/forward-testing-playbook.md` and validate an external fresh-runner, independent-reviewer report with `scripts/forward_test_report.py`; keep the report and response artifacts outside this skill tree.
 
-- put the detailed rule in the most specific owning reference
-- add or update a generic doctrine only when it transfers across many future jobs
-- keep the entry `SKILL.md` as a router and execution guide, not a full knowledge dump
-- prefer new generic references over site notes
-- preserve 5 to 15 minimal verifiable facts when a target family, upgrade path, or sibling route looks likely to recur
+Put reusable detail in its most specific reference. Keep this entry as the protocol-first execution path and direct router. Preserve generic facts and fixed vectors, never live secrets, copied cookies, account tokens, or site-specific folklore.
 
 ## Bottom Line
 
-This skill should teach one habit above all:
+When a site looks browser-only, ask:
 
-When the site looks "browser-only", do not panic and do not automate.
-First ask:
+1. What is the real request?
+2. What is the real changing state?
+3. Can that state be rebuilt locally?
 
-1. what is the real request
-2. what is the real changing state
-3. can that state be rebuilt locally
-
-Most similar targets collapse once those three questions are answered honestly.
+Most targets collapse once those questions are answered with wire evidence and repeatable replay.

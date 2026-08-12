@@ -7,6 +7,17 @@ Use this reference when:
 - Node or Python differs from the live page even after obvious patches
 - the request looks correct, but server acceptance or local decode still fails
 
+## Contents
+
+- [Core rule](#core-rule)
+- [1. Redirect and wrapper-page triage](#1-redirect-and-wrapper-page-triage)
+- [2. Separate four layers](#2-separate-four-layers)
+- [3. Standard-vs-patched workflow](#3-standard-vs-patched-workflow)
+- [4. Narrowing strategy](#4-narrowing-strategy)
+- [5. Preferred delivery shapes](#5-preferred-delivery-shapes)
+- [6. Network sanity checks](#6-network-sanity-checks)
+- [7. Verification checklist](#7-verification-checklist)
+
 ## Core rule
 
 Environment mismatch is evidence, not a reason to surrender to automation.

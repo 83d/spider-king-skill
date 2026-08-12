@@ -4,7 +4,10 @@
 from __future__ import annotations
 
 import argparse
+import os
 import re
+import stat
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from textwrap import dedent
@@ -36,6 +39,7 @@ class ProfileSpec:
     anti_patterns: tuple[str, ...]
     list_method: str
     list_body_kind: str
+    response_body_kind: str
     transport_field: str
     sign_field: str
     timestamp_field: str
@@ -60,6 +64,7 @@ PROFILE_SPECS: dict[str, ProfileSpec] = {
         ),
         list_method="GET",
         list_body_kind="query",
+        response_body_kind="json",
         transport_field="",
         sign_field="sign",
         timestamp_field="timestamp",
@@ -82,6 +87,7 @@ PROFILE_SPECS: dict[str, ProfileSpec] = {
         ),
         list_method="POST",
         list_body_kind="json",
+        response_body_kind="json",
         transport_field="param",
         sign_field="sign",
         timestamp_field="timeStamp",
@@ -104,6 +110,7 @@ PROFILE_SPECS: dict[str, ProfileSpec] = {
         ),
         list_method="POST",
         list_body_kind="json",
+        response_body_kind="json",
         transport_field="",
         sign_field="sign",
         timestamp_field="timestamp",
@@ -126,6 +133,7 @@ PROFILE_SPECS: dict[str, ProfileSpec] = {
         ),
         list_method="GET",
         list_body_kind="query",
+        response_body_kind="bytes",
         transport_field="",
         sign_field="sign",
         timestamp_field="timestamp",
@@ -156,12 +164,173 @@ def replace_tokens(template: str, mapping: dict[str, str]) -> str:
     return rendered
 
 
-def write_file(path: Path, content: str, force: bool, stats: WriteStats) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    exists = path.exists()
+class UnsafeProjectPathError(RuntimeError):
+    """Raised before a scaffold write could traverse a filesystem link."""
+
+
+def _absolute_path(path: Path) -> Path:
+    return Path(os.path.abspath(os.fspath(path)))
+
+
+def _lexists(path: Path) -> bool:
+    return os.path.lexists(os.fspath(path))
+
+
+def _is_link_or_reparse(path: Path) -> bool:
+    try:
+        metadata = os.lstat(path)
+    except FileNotFoundError:
+        return False
+    reparse_flag = getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+    return stat.S_ISLNK(metadata.st_mode) or bool(
+        getattr(metadata, "st_file_attributes", 0) & reparse_flag
+    )
+
+
+def _reject_link_or_reparse(path: Path) -> None:
+    if _is_link_or_reparse(path):
+        raise UnsafeProjectPathError(
+            f"Refusing scaffold path through a symlink or reparse point: {path}"
+        )
+
+
+def _reject_hard_link(path: Path) -> None:
+    if not _lexists(path):
+        return
+    try:
+        metadata = path.stat(follow_symlinks=False)
+    except OSError as exc:
+        raise UnsafeProjectPathError(f"Cannot inspect scaffold path: {path}") from exc
+    if stat.S_ISREG(metadata.st_mode) and metadata.st_nlink > 1:
+        raise UnsafeProjectPathError(
+            f"Refusing scaffold path backed by a hard-linked file: {path}"
+        )
+
+
+def _require_within(project_root: Path, target: Path) -> None:
+    try:
+        target.relative_to(project_root)
+    except ValueError as exc:
+        raise UnsafeProjectPathError(
+            f"Refusing scaffold path outside project root: {target}"
+        ) from exc
+
+
+def _validate_existing_components(start: Path, target: Path) -> None:
+    start = _absolute_path(start)
+    target = _absolute_path(target)
+    _require_within(start, target)
+
+    current = start
+    if _lexists(current):
+        _reject_link_or_reparse(current)
+    for part in target.relative_to(start).parts:
+        current /= part
+        if _lexists(current):
+            _reject_link_or_reparse(current)
+
+
+def _validate_resolved_target(project_root: Path, target: Path) -> None:
+    project_root = _absolute_path(project_root)
+    target = _absolute_path(target)
+    _require_within(project_root, target)
+    _validate_existing_components(project_root, target)
+
+    resolved_root = project_root.resolve(strict=True)
+    existing = target
+    while not _lexists(existing):
+        existing = existing.parent
+    resolved_existing = existing.resolve(strict=True)
+    _require_within(resolved_root, resolved_existing)
+
+
+def _mkdir_without_links(path: Path) -> None:
+    path = _absolute_path(path)
+    anchor = Path(path.anchor)
+    current = anchor
+    for part in path.relative_to(anchor).parts:
+        current /= part
+        if _lexists(current):
+            _reject_link_or_reparse(current)
+            if not current.is_dir():
+                raise NotADirectoryError(current)
+            continue
+        current.mkdir()
+        _reject_link_or_reparse(current)
+
+
+def _mkdir_in_project(project_root: Path, path: Path) -> None:
+    project_root = _absolute_path(project_root)
+    path = _absolute_path(path)
+    _require_within(project_root, path)
+    _validate_existing_components(project_root, path)
+
+    current = project_root
+    for part in path.relative_to(project_root).parts:
+        current /= part
+        if _lexists(current):
+            _reject_link_or_reparse(current)
+            if not current.is_dir():
+                raise NotADirectoryError(current)
+        else:
+            current.mkdir()
+            _reject_link_or_reparse(current)
+        _validate_resolved_target(project_root, current)
+
+
+def write_file(
+    project_root: Path,
+    path: Path,
+    content: str,
+    force: bool,
+    stats: WriteStats,
+) -> None:
+    project_root = _absolute_path(project_root)
+    path = _absolute_path(path)
+    _validate_resolved_target(project_root, path)
+    _mkdir_in_project(project_root, path.parent)
+    _validate_resolved_target(project_root, path)
+
+    exists = _lexists(path)
     if exists and not force:
         return
-    path.write_text(normalize_content(content), encoding="utf-8")
+    if exists:
+        _reject_hard_link(path)
+
+    file_descriptor: int | None = None
+    temporary_path: Path | None = None
+    try:
+        file_descriptor, temporary_name = tempfile.mkstemp(
+            dir=path.parent,
+            prefix=f".{path.name}.",
+            suffix=".tmp",
+        )
+        temporary_path = Path(temporary_name)
+        _validate_resolved_target(project_root, temporary_path)
+        _reject_link_or_reparse(temporary_path)
+        _reject_hard_link(temporary_path)
+        with os.fdopen(file_descriptor, "w", encoding="utf-8", newline="\n") as handle:
+            file_descriptor = None
+            handle.write(normalize_content(content))
+            handle.flush()
+            os.fsync(handle.fileno())
+
+        _validate_resolved_target(project_root, path.parent)
+        _validate_resolved_target(project_root, path)
+        if _lexists(path):
+            _reject_link_or_reparse(path)
+            _reject_hard_link(path)
+        os.replace(temporary_path, path)
+        temporary_path = None
+    finally:
+        if file_descriptor is not None:
+            os.close(file_descriptor)
+        if temporary_path is not None:
+            try:
+                temporary_path.unlink(missing_ok=True)
+            except OSError:
+                pass
+    _validate_resolved_target(project_root, path)
     if exists:
         stats.updated += 1
     else:
@@ -185,6 +354,7 @@ def build_mapping(slug: str, spec: ProfileSpec) -> dict[str, str]:
         "PROFILE_ANTI_PATTERNS": profile_anti_patterns(spec),
         "LIST_METHOD": spec.list_method,
         "LIST_BODY_KIND": spec.list_body_kind,
+        "RESPONSE_BODY_KIND": spec.response_body_kind,
         "TRANSPORT_FIELD": spec.transport_field,
         "SIGN_FIELD": spec.sign_field,
         "TIMESTAMP_FIELD": spec.timestamp_field,
@@ -201,10 +371,27 @@ def analysis_templates() -> dict[str, str]:
             __pycache__/
             .pytest_cache/
             .venv/
+            .env
+            .env.*
             *.pyc
             *.pyo
             *.pyd
             *.log
+            /input/*
+            !/input/.gitkeep
+            /output/*
+            !/output/.gitkeep
+            /logs/*
+            !/logs/.gitkeep
+            /js_reverse_cache/
+            /analysis/request_samples/*
+            !/analysis/request_samples/README.md
+            /analysis/runtime_vectors/*
+            !/analysis/runtime_vectors/README.md
+            /local_settings.py
+            /settings.local.*
+            /collector/local_settings.py
+            /collector/settings.local.*
         """,
         "pyproject.toml": """
             [tool.pytest.ini_options]
@@ -386,6 +573,29 @@ def analysis_templates() -> dict[str, str]:
             # pycryptodome>=3.20.0
             # pytest>=8.0.0
         """,
+        "main.py": """
+            from collector.main import main
+
+
+            if __name__ == "__main__":
+                # PyCharm right-click entrypoint. Keep defaults here; do not require CLI flags.
+                raise SystemExit(main())
+            """,
+        "js_reverse_cache/tasks/README.md": """
+            # Task cache
+
+            Put investigation artifacts under `js_reverse_cache/tasks/<task-id>/`:
+
+            - `task.json`
+            - `network.jsonl`
+            - `runtime-evidence.jsonl`
+            - `handoff.json`
+            - `fixtures/`
+            - `report.md`
+
+            Do not store durable collector code here. Delivery proof stays in `analysis/proof_manifest.json`.
+            Never commit raw cookies, tokens, or account secrets.
+            """,
         "README.md": """
             # __SLUG__
 
@@ -417,7 +627,9 @@ def analysis_templates() -> dict[str, str]:
             - `collector/envelope.py`: compact JSON, sign order, timestamp injection, and wrapper building
             - `collector/sign.py`: signer and fixed-input self-checks
             - `collector/decode.py`: local decode or parser chain
-            - `collector/main.py`: protocol replay entry point
+            - `main.py`: PyCharm right-click entrypoint (no required CLI args)
+- `collector/main.py`: protocol replay entry point
+- `js_reverse_cache/tasks/`: investigation cache only
 
             ## Run
             ```bash
@@ -425,6 +637,7 @@ def analysis_templates() -> dict[str, str]:
             .venv\\Scripts\\activate
             pip install -r requirements.txt
             python -m unittest discover
+            python main.py
             python -m collector.main --pages 3
             ```
 
@@ -457,6 +670,7 @@ def collector_templates() -> dict[str, str]:
                 list_method: str = "__LIST_METHOD__"
                 detail_method: str = "GET"
                 list_body_kind: str = "__LIST_BODY_KIND__"
+                response_body_kind: str = "__RESPONSE_BODY_KIND__"
                 transport_field: str = "__TRANSPORT_FIELD__"
                 sign_field: str = "__SIGN_FIELD__"
                 timestamp_field: str = "__TIMESTAMP_FIELD__"
@@ -490,26 +704,86 @@ def collector_templates() -> dict[str, str]:
             from __future__ import annotations
 
             import json
-            from http.cookiejar import CookieJar
+            from http.cookiejar import Cookie, CookieJar
             from typing import Any
             from urllib import error, parse, request
+
+
+            ERROR_BODY_READ_LIMIT = 64 * 1024
+
+
+            def _safe_url_for_error(url: str) -> str:
+                try:
+                    parts = parse.urlsplit(url)
+                except ValueError:
+                    return "<invalid-url>"
+                hostname = parts.hostname or ""
+                if ":" in hostname and not hostname.startswith("["):
+                    hostname = f"[{hostname}]"
+                try:
+                    port = parts.port
+                except ValueError:
+                    port = None
+                netloc = hostname if port is None else f"{hostname}:{port}"
+                return parse.urlunsplit((parts.scheme, netloc, parts.path, "", ""))
+
+
+            def _cookie_domain_for_url(url: str) -> str:
+                hostname = parse.urlsplit(url).hostname or ""
+                if hostname and "." not in hostname and ":" not in hostname:
+                    return f"{hostname}.local"
+                return hostname
 
 
             class ProtocolClient:
                 def __init__(self, default_headers: dict[str, str] | None = None) -> None:
                     self.cookie_jar = CookieJar()
                     self.opener = request.build_opener(request.HTTPCookieProcessor(self.cookie_jar))
-                    self.default_headers = default_headers or {}
+                    self.default_headers = dict(default_headers or {})
 
-                def seed_cookies(self, cookies: dict[str, str]) -> None:
-                    if cookies:
-                        cookie_header = "; ".join(f"{key}={value}" for key, value in cookies.items())
-                        self.default_headers["Cookie"] = cookie_header
+                def seed_cookies(self, cookies: dict[str, str], *, url: str = "") -> None:
+                    self.default_headers = {
+                        key: value
+                        for key, value in self.default_headers.items()
+                        if key.lower() != "cookie"
+                    }
+                    hostname = _cookie_domain_for_url(url)
+                    names = set(cookies)
+                    for cookie in list(self.cookie_jar):
+                        if cookie.name in names:
+                            self.cookie_jar.clear(cookie.domain, cookie.path, cookie.name)
+                    for name, value in cookies.items():
+                        self.cookie_jar.set_cookie(
+                            Cookie(
+                                version=0,
+                                name=name,
+                                value=str(value),
+                                port=None,
+                                port_specified=False,
+                                domain=hostname,
+                                domain_specified=False,
+                                domain_initial_dot=False,
+                                path="/",
+                                path_specified=True,
+                                secure=False,
+                                expires=None,
+                                discard=True,
+                                comment=None,
+                                comment_url=None,
+                                rest={},
+                                rfc2109=False,
+                            )
+                        )
 
                 def cookies_as_dict(self) -> dict[str, str]:
                     return {cookie.name: cookie.value for cookie in self.cookie_jar}
 
-                def request_text(
+                def serialize_json_body(self, json_body: Any, *, compact_json: bool = True) -> bytes:
+                    if compact_json:
+                        return json.dumps(json_body, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+                    return json.dumps(json_body, ensure_ascii=False).encode("utf-8")
+
+                def request_bytes(
                     self,
                     url: str,
                     *,
@@ -519,8 +793,9 @@ def collector_templates() -> dict[str, str]:
                     json_body: Any | None = None,
                     form_body: dict[str, object] | None = None,
                     raw_body: str | bytes | None = None,
+                    compact_json: bool = True,
                     timeout: float = 20.0,
-                ) -> str:
+                ) -> bytes:
                     final_url = url
                     if params:
                         query = parse.urlencode(params, doseq=True)
@@ -533,7 +808,7 @@ def collector_templates() -> dict[str, str]:
 
                     data: bytes | None = None
                     if json_body is not None:
-                        data = json.dumps(json_body, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+                        data = self.serialize_json_body(json_body, compact_json=compact_json)
                         merged_headers.setdefault("Content-Type", "application/json")
                     elif form_body is not None:
                         data = parse.urlencode(form_body, doseq=True).encode("utf-8")
@@ -541,20 +816,35 @@ def collector_templates() -> dict[str, str]:
                     elif raw_body is not None:
                         data = raw_body if isinstance(raw_body, bytes) else raw_body.encode("utf-8")
 
-                    http_request = request.Request(
-                        final_url,
-                        data=data,
-                        headers=merged_headers,
-                        method=method.upper(),
-                    )
                     try:
+                        http_request = request.Request(
+                            final_url,
+                            data=data,
+                            headers=merged_headers,
+                            method=method.upper(),
+                        )
                         with self.opener.open(http_request, timeout=timeout) as response:
-                            return response.read().decode("utf-8")
+                            return response.read()
                     except error.HTTPError as exc:
-                        body = exc.read().decode("utf-8", errors="replace")
-                        raise RuntimeError(f"HTTP {exc.code} for {final_url}: {body[:300]}") from exc
-                    except error.URLError as exc:
-                        raise RuntimeError(f"Network failure for {final_url}: {exc.reason}") from exc
+                        try:
+                            exc.read(ERROR_BODY_READ_LIMIT)
+                        except Exception:
+                            pass
+                        try:
+                            exc.close()
+                        except Exception:
+                            pass
+                        safe_url = _safe_url_for_error(final_url)
+                        raise RuntimeError(f"HTTP {exc.code} for {safe_url}") from None
+                    except error.URLError:
+                        safe_url = _safe_url_for_error(final_url)
+                        raise RuntimeError(f"Network failure for {safe_url}") from None
+                    except ValueError:
+                        safe_url = _safe_url_for_error(final_url)
+                        raise RuntimeError(f"Invalid request URL for {safe_url}") from None
+
+                def request_text(self, url: str, **kwargs: Any) -> str:
+                    return self.request_bytes(url, **kwargs).decode("utf-8")
 
                 def request_json(self, url: str, **kwargs: Any) -> Any:
                     return json.loads(self.request_text(url, **kwargs))
@@ -820,6 +1110,7 @@ def collector_templates() -> dict[str, str]:
             from __future__ import annotations
 
             import argparse
+            import sys
             import time
             from typing import Any
 
@@ -855,13 +1146,20 @@ def collector_templates() -> dict[str, str]:
                 }
                 if settings.list_body_kind == "json":
                     kwargs["json_body"] = body
+                    kwargs["compact_json"] = settings.use_compact_json
                 elif settings.list_body_kind == "form":
                     kwargs["form_body"] = body
                 elif settings.list_body_kind == "query":
                     kwargs["params"] = body
                 else:
                     raise RuntimeError(f"Unsupported list_body_kind: {settings.list_body_kind}")
-                return client.request_json(settings.list_url, **kwargs)
+                if settings.response_body_kind == "json":
+                    return client.request_json(settings.list_url, **kwargs)
+                if settings.response_body_kind == "text":
+                    return client.request_text(settings.list_url, **kwargs)
+                if settings.response_body_kind == "bytes":
+                    return client.request_bytes(settings.list_url, **kwargs)
+                raise RuntimeError(f"Unsupported response_body_kind: {settings.response_body_kind}")
 
 
             def fetch_page(
@@ -883,16 +1181,20 @@ def collector_templates() -> dict[str, str]:
 
 
             def collect_items(settings: Settings, pages: int) -> list[dict[str, Any]]:
+                if not settings.list_url:
+                    raise RuntimeError("list_url is empty; update Settings before live replay")
                 client = ProtocolClient(default_headers=settings.base_headers)
-                client.seed_cookies(settings.cookies)
+                seed_url = (
+                    settings.base_url
+                    or settings.entry_url
+                    or settings.bootstrap_url
+                    or settings.list_url
+                )
+                client.seed_cookies(settings.cookies, url=seed_url)
 
                 run_self_check()
                 run_envelope_self_check()
                 run_decode_self_check()
-
-                if not settings.list_url:
-                    print("list_url is empty; update Settings before live replay")
-                    return []
 
                 bootstrap_state = bootstrap_session(client, settings)
                 items: list[dict[str, Any]] = []
@@ -921,20 +1223,27 @@ def collector_templates() -> dict[str, str]:
                 return parser
 
 
-            def main() -> None:
+            def main() -> int:
                 args = build_parser().parse_args()
                 settings = Settings()
                 if args.json:
                     settings.output_json = args.json
                 if args.csv:
                     settings.output_csv = args.csv
+                if not settings.list_url:
+                    print(
+                        "error: list_url is empty; update Settings before live replay",
+                        file=sys.stderr,
+                    )
+                    return 2
                 items = collect_items(settings, pages=args.pages)
                 save_outputs(items, settings.output_json, settings.output_csv)
                 print(f"saved {len(items)} items")
+                return 0
 
 
             if __name__ == "__main__":
-                main()
+                raise SystemExit(main())
         """,
     }
 
@@ -942,6 +1251,23 @@ def collector_templates() -> dict[str, str]:
 def test_templates() -> dict[str, str]:
     return {
         "tests/__init__.py": "",
+        "tests/test_client.py": """
+            import unittest
+
+            from collector.client import ProtocolClient
+
+
+            class ClientTests(unittest.TestCase):
+                def test_serialize_json_body_compact(self) -> None:
+                    client = ProtocolClient()
+                    body = client.serialize_json_body({"a": 1, "b": 2}, compact_json=True)
+                    self.assertEqual(body.decode("utf-8"), '{"a":1,"b":2}')
+
+                def test_serialize_json_body_non_compact(self) -> None:
+                    client = ProtocolClient()
+                    body = client.serialize_json_body({"a": 1, "b": 2}, compact_json=False)
+                    self.assertEqual(body.decode("utf-8"), '{"a": 1, "b": 2}')
+        """,
         "tests/test_pipeline.py": """
             import unittest
 
@@ -957,6 +1283,7 @@ def test_templates() -> dict[str, str]:
                     self.assertEqual(len(normalize_items(items)), 2)
         """,
         "tests/test_envelope.py": """
+            import json
             import unittest
 
             from collector.envelope import build_transport_body, compact_json
@@ -970,7 +1297,12 @@ def test_templates() -> dict[str, str]:
                 def test_transport_field_wraps_payload(self) -> None:
                     settings = Settings(transport_field="param", sign_field="", timestamp_field="")
                     body = build_transport_body({"pageIndex": 1}, settings)
-                    self.assertEqual(body, {"param": '{"pageIndex":1}'})
+                    expected = (
+                        compact_json({"pageIndex": 1})
+                        if settings.use_compact_json
+                        else json.dumps({"pageIndex": 1}, ensure_ascii=False)
+                    )
+                    self.assertEqual(body, {"param": expected})
         """,
         "tests/test_extract.py": """
             import unittest
@@ -1024,15 +1356,32 @@ def build_templates(slug: str, spec: ProfileSpec) -> dict[str, str]:
 
 def scaffold(root: Path, name: str, profile: str, force: bool) -> tuple[Path, WriteStats]:
     slug = slugify(name)
+    root = _absolute_path(root)
+    _mkdir_without_links(root)
     project = root / slug
+    if _lexists(project):
+        _reject_link_or_reparse(project)
+        if not project.is_dir():
+            raise NotADirectoryError(project)
+    else:
+        project.mkdir()
+    _reject_link_or_reparse(project)
+    _validate_resolved_target(project, project)
+
     stats = WriteStats()
     spec = PROFILE_SPECS[profile]
+    templates = build_templates(slug, spec)
+
+    planned_paths = [project / rel for rel in PROJECT_DIRS]
+    planned_paths.extend(project / relative_path for relative_path in templates)
+    for planned_path in planned_paths:
+        _validate_resolved_target(project, planned_path)
 
     for rel in PROJECT_DIRS:
-        (project / rel).mkdir(parents=True, exist_ok=True)
+        _mkdir_in_project(project, project / rel)
 
-    for relative_path, content in build_templates(slug, spec).items():
-        write_file(project / relative_path, content, force, stats)
+    for relative_path, content in templates.items():
+        write_file(project, project / relative_path, content, force, stats)
 
     return project, stats
 
@@ -1057,14 +1406,13 @@ def build_parser() -> argparse.ArgumentParser:
 def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
-    project, stats = scaffold(Path(args.root).resolve(), args.name, args.profile, args.force)
+    project, stats = scaffold(Path(args.root), args.name, args.profile, args.force)
     print(project)
     print(f"profile={args.profile}")
     print(f"created={stats.created} updated={stats.updated}")
     print(
-        "next: fill analysis/notes.md, analysis/bootstrap_contract.md, "
-        "analysis/envelope_map.md, collector/bootstrap.py, collector/envelope.py, "
-        "collector/sign.py, collector/decode.py, and collector/main.py"
+        "next: fill analysis/notes.md and contracts, implement collector modules, "
+        "keep main.py as the right-click entrypoint, and use js_reverse_cache/ for task evidence"
     )
 
 

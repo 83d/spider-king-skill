@@ -18,6 +18,12 @@ Keep narrow exceptions narrow.
 4. encode the verified exception in per-page or per-request settings
 5. keep the rest of the collector unchanged
 
+Typical narrow exceptions:
+
+- last-page or one-route `User-Agent` overrides
+- one-route referer or origin requirements
+- one-route extra header that successful siblings do not send
+
 ## Common traps
 
 - assuming the signer is broken when the real issue is one header

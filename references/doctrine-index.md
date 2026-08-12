@@ -4,6 +4,39 @@ Use this file when the target is still broad, the failure mode feels familiar, o
 
 These are transfer rules, not site notes.
 
+## Contents
+
+- [Doctrine 1: Trust the wire, not the page text](#doctrine-1-trust-the-wire-not-the-page-text)
+- [Doctrine 2: The dynamic parameter is not always a signature](#doctrine-2-the-dynamic-parameter-is-not-always-a-signature)
+- [Doctrine 3: Fixed-input validation beats naming](#doctrine-3-fixed-input-validation-beats-naming)
+- [Doctrine 4: Narrow exceptions stay narrow](#doctrine-4-narrow-exceptions-stay-narrow)
+- [Doctrine 5: Automation is not an acceptable crutch](#doctrine-5-automation-is-not-an-acceptable-crutch)
+- [Doctrine 6: Environment mismatch is evidence](#doctrine-6-environment-mismatch-is-evidence)
+- [Doctrine 7: Delivery gates outrank convenience](#doctrine-7-delivery-gates-outrank-convenience)
+- [Doctrine 8: Public does not mean unsigned](#doctrine-8-public-does-not-mean-unsigned)
+- [Doctrine 9: Stateful streams are protocol, not browser magic](#doctrine-9-stateful-streams-are-protocol-not-browser-magic)
+- [Doctrine 10: Observer effect is real](#doctrine-10-observer-effect-is-real)
+- [Doctrine 11: Cookie provenance beats cookie superstition](#doctrine-11-cookie-provenance-beats-cookie-superstition)
+- [Doctrine 12: Packet framing and crypto are separate contracts](#doctrine-12-packet-framing-and-crypto-are-separate-contracts)
+- [Doctrine 13: Pagination is a protocol surface](#doctrine-13-pagination-is-a-protocol-surface)
+- [Doctrine 14: Raw source can beat parsed DOM](#doctrine-14-raw-source-can-beat-parsed-dom)
+- [Doctrine 14A: Server-looking field names do not prove server issuance](#doctrine-14a-server-looking-field-names-do-not-prove-server-issuance)
+- [Doctrine 14B: Minted session is not admitted session](#doctrine-14b-minted-session-is-not-admitted-session)
+- [Doctrine 14C: Enumeration and hydration are separate contracts](#doctrine-14c-enumeration-and-hydration-are-separate-contracts)
+- [Doctrine 15: Embedded runtimes are scalpels, not a second browser](#doctrine-15-embedded-runtimes-are-scalpels-not-a-second-browser)
+- [Doctrine 16: Probe chains reveal the missing surface](#doctrine-16-probe-chains-reveal-the-missing-surface)
+- [Doctrine 17: Transport admission is a separate contract](#doctrine-17-transport-admission-is-a-separate-contract)
+- [Doctrine 18: Harvest challenge artifacts at the nearest stable boundary](#doctrine-18-harvest-challenge-artifacts-at-the-nearest-stable-boundary)
+- [Doctrine 19: Server-issued state beats local invention](#doctrine-19-server-issued-state-beats-local-invention)
+- [Doctrine 20: Split verifier targets by failure surface](#doctrine-20-split-verifier-targets-by-failure-surface)
+- [Doctrine 21: Weak enforcement is evidence, not absolution](#doctrine-21-weak-enforcement-is-evidence-not-absolution)
+- [Doctrine 22: Escalate one rung at a time](#doctrine-22-escalate-one-rung-at-a-time)
+- [Doctrine 23: Small facts age better than big summaries](#doctrine-23-small-facts-age-better-than-big-summaries)
+- [Doctrine 24: Counterexamples constrain better than slogans](#doctrine-24-counterexamples-constrain-better-than-slogans)
+- [Doctrine 25: Positive-sample hygiene beats track tuning](#doctrine-25-positive-sample-hygiene-beats-track-tuning)
+- [Doctrine 26: Environment risk is its own failure surface](#doctrine-26-environment-risk-is-its-own-failure-surface)
+- [Related references added for dual writers and local challenge executors](#related-references-added-for-dual-writers-and-local-challenge-executors)
+
 ## Doctrine 1: Trust the wire, not the page text
 
 - Real request paths beat page hints.
@@ -218,8 +251,12 @@ Do not collapse silent environment-probe branches into vague "JS obfuscation".
 Some targets block the clean baseline before signer, cookie, or decode logic is even visible.
 
 - TLS fingerprint, ALPN, HTTP version, UA family, and route choice can decide whether the application contract is reachable at all
+- copied HTTP headers do not clear a gate that is decided by ClientHello or HTTP/2 profile before normal request semantics exist
+- JA3 or JA4 are summary indicators; compare the underlying ClientHello, ALPN, and H2 behavior before cargo-culting one hash
+- when one browser family randomizes extension order or GREASE, preserve the family behavior or raw field profile instead of freezing one unstable summary value
 - if stdlib clients die at H2 reset, timeout, or early disconnect while an impersonated transport passes, solve admission first and keep the exception narrow
 - one landing route may be challenged while a sibling auth or data route remains usable; verify route-local policy before reversing the wrong fight
+- prefer the closest transport family or narrow adapter before hand-patching a distant default stack one field at a time
 
 Do not blame signer or cookie logic for traffic that never cleared transport admission.
 
@@ -233,6 +270,10 @@ Do not over-solve a hostile runtime when one explicit artifact is enough.
 - patch the smallest faithful boundary and let structural errors propagate; a catch-all that hides recursion or state corruption is sabotage
 
 Do not treat full challenge execution as the goal when one explicit artifact is enough for Python replay.
+
+- prefer navigation or redirect URL harvest before cookie-by-cookie reverse when the runtime already rewrites the business URL
+- treat business JSON routes that return challenge HTML as challenge bootstrap, not as a dead endpoint
+- if one field has both a short research writer and a long wire-success writer, deliver only the live-accepted class
 
 ## Doctrine 19: Server-issued state beats local invention
 
@@ -252,6 +293,11 @@ When a verifier mixes requests, hashes, images, and behavior, force the problem 
 - compute surface: hashes, PoW, encoding, packing, canonicalization
 - perception surface: image preprocessing, transparency, coordinate mapping, match confidence
 - behavior surface: trajectories, timing, gesture sidecars, telemetry blobs
+- freeze the full ordered verifier transcript, including warm-up and telemetry routes, before treating the final verify request as the whole contract
+- use one-variable block, omit, and restore controls to prove whether a sidecar changes final semantic acceptance
+- model complete profile baselines and sparse deltas as one shared state contract rather than independently valid packets
+- preserve actual wall-clock ordering when the transcript claims elapsed interaction time
+- compare active asset hashes, helper boundaries, and fixed vectors before treating a dynamic path as a new algorithm
 - attach an independent proof to each surface: raw responses, fixed-input tests, visual QA, and replay proof
 
 Do not let a perception or behavior failure masquerade as a signer bug.
@@ -299,3 +345,36 @@ When the same bad move keeps recurring, promote it into a reusable anti-pattern:
 - end with one direct self-check
 
 Use `references/anti-patterns-playbook.md` for those counterexamples.
+
+## Doctrine 25: Positive-sample hygiene beats track tuning
+
+When a verifier rejects behavior-sensitive proofs:
+
+- treat clean success samples as higher authority than automation-contaminated failures
+- prefer ordinary browser capture or non-instrumented listening over hooked automation profiles for positive oracles
+- do not promote a failed automation hand-slide into proof that the trajectory family is wrong
+- separate sample grades: clean success, contaminated failure, partial transcript
+- read `references/positive-sample-hygiene-playbook.md`
+
+Do not spend the next hour mutating tracks while the only negatives came from a polluted environment.
+
+## Doctrine 26: Environment risk is its own failure surface
+
+Split verifier failure surfaces explicitly:
+
+- protocol and shared-state consistency
+- compute or packing helpers
+- perception or answer extraction
+- behavior traces
+- telemetry sidecars
+- session freshness
+- transport admission
+- environment risk: exit reputation, automation marks, consecutive rejects, profile age
+
+A structurally valid transcript can still fail after the environment score collapses. Change the environment surface on purpose; do not hide that work inside track search.
+
+## Related references added for dual writers and local challenge executors
+
+
+- `references/dual-writer-param-playbook.md`
+- `references/local-challenge-executor-playbook.md`

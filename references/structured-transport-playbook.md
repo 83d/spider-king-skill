@@ -46,6 +46,30 @@ Transport shape is part of the protocol contract.
 - identify field boundaries or parser functions
 - confirm whether compression happens before structured decode
 
+## gRPC and grpc-web framing
+
+Treat each message frame as a wire contract:
+
+1. byte 0 is the frame flag
+2. bytes 1 through 4 are an unsigned big-endian payload length
+3. the next `length` bytes are exactly one message payload
+4. repeat until the body or stream is exhausted
+
+Do not treat every nonzero flag as `zlib`. Resolve `grpc-encoding` or the active grpc-web contract from headers and runtime evidence. For grpc-web, distinguish data frames from trailer frames, preserve the transport encoding (`application/grpc-web+proto` versus text/Base64), and parse every frame rather than only the first payload.
+
+Verification gates:
+
+- reject truncated five-byte headers and payload lengths beyond the available bytes
+- prove single-frame and multi-frame parsing with fixed bytes
+- retain unknown protobuf fields or raw payload bytes when the schema is incomplete
+- compare decoded messages and re-encoded frame bytes separately
+- use a negative control with a tampered length, flag, or trailer boundary
+- do not call HTTP `200` or `grpc-status: 0` sufficient until the intended business message is decoded and consumed
+
+Use `scripts/grpc_frame_inspector.py` for a bounded structural check. By default it emits only flags, kind, length, and offset; it does not print payload bytes, choose a compression codec, or decode protobuf fields. Payload SHA-256 is disabled by default. Enable `--include-payload-sha256` only for task-local correlation, because stable hashes of sensitive payloads are unsafe to publish.
+
+If compression, encryption, or signing wraps the protobuf payload, record the exact order. A common shape is frame parse -> decompress -> protobuf, but captured bytes and the active parser remain authoritative.
+
 ## Acceptable handoff
 
 The final collector must still be local protocol code:

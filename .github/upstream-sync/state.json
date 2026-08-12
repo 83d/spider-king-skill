@@ -1,0 +1,6 @@
+{
+  "overlay": "node-dependency-isolation",
+  "upstream_ref": "main",
+  "upstream_repository": "aoyunyang/spider-king-skill",
+  "upstream_sha": "17992a93049f5498a538125e64a67bfc01bac048"
+}

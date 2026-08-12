@@ -2,6 +2,22 @@
 
 Use this file as the fast map from reverse-engineering task to tool choice.
 
+## Contents
+
+- [Preferred order](#preferred-order)
+- [Evidence surfaces do different jobs](#evidence-surfaces-do-different-jobs)
+- [Capability-aware evidence route matrix](#capability-aware-evidence-route-matrix)
+- [Recon and network capture](#recon-and-network-capture)
+- [Capability snapshot](#capability-snapshot)
+- [Browser lifecycle and handoff](#browser-lifecycle-and-handoff)
+- [Static JS analysis](#static-js-analysis)
+- [Dynamic validation](#dynamic-validation)
+- [Session and environment handling](#session-and-environment-handling)
+- [Embedded runtime routing](#embedded-runtime-routing)
+- [Failure routing](#failure-routing)
+- [Focused profile tools](#focused-profile-tools)
+- [Local helper scripts](#local-helper-scripts)
+
 ## Preferred order
 
 1. Capture one clean baseline request.
@@ -13,6 +29,29 @@ Use this file as the fast map from reverse-engineering task to tool choice.
 7. Scale collection only after the first request is repeatable.
 
 Prefer clean baselines, initiator stacks, and narrow proofs over broad hooks. Prefer focused source reads over loading giant bundles into context.
+
+## Evidence surfaces do different jobs
+
+Do not let one proof surface pretend to clear another:
+
+- initiator stacks and source reads prove where mutation logic lives
+- wire capture or request egress proves what actually crossed the boundary
+- environment traces prove DOM, BOM, descriptor, timer, and native-surface truth
+- downstream business replay proves whether the recovered path is actually accepted
+
+Treat these as complementary surfaces, not interchangeable ones. A value seen in locals, a quiet hook, or a convincing environment patch does not outrank the live wire or downstream business result.
+
+## Capability-aware evidence route matrix
+
+Treat the role definitions, evidence requirements, and fallback limits in `references/startup-triage-playbook.md` as canonical. This table only maps those roles to installed capability families; never bind them to a vendor, profile id, assumed port, or unconfirmed method.
+
+| Evidence role | Useful confirmed capabilities | Transition signal |
+|---|---|---|
+| `fingerprint-baseline` | a target-compatible configured browser mode, wire capture, redirects, page snapshots, and session inspection | clean baseline saved and observer-effect risk bounded |
+| `debugger-trace` | request initiators, source search/export, breakpoints, call frames, argument/return inspection, or a narrow behavior-preserving hook | wire request correlated to the smallest mutation boundary or a named capability gap |
+| `cdp-bridge` | an explicitly exposed connection with the required Network, Runtime, or Debugger domains | correlated bridge evidence saved under the current owner, or the bridge declared unavailable |
+
+Roles may hand evidence to one another; they are not choose-once routes. For a fresh `live-target`, the contractual order remains the Chrome baseline followed by `js-reverse` after the handoff gate. `fingerprint-baseline` may describe the Chrome phase when its configured mode supports that claim, `debugger-trace` commonly describes the later `js-reverse` phase, and optional `cdp-bridge` work stays under the current `TARGET_ACTIVE` owner. None of these role labels excuses either required first-pass evidence surface.
 
 ## Recon and network capture
 
@@ -36,6 +75,91 @@ Prefer clean baselines, initiator stacks, and narrow proofs over broad hooks. Pr
 
 Use browser DevTools when DOM state matters. Use `js-reverse` when JavaScript runtime, request initiators, or hooks matter.
 
+## Capability snapshot
+
+Before a `live-target` pass, inspect the active tool registry and record:
+
+- required methods that are available
+- optional methods that are available
+- selected fallback for every missing optional method
+- configured browser mode and whether it can be changed without restarting or reconfiguring the server
+- blockers that prevent one evidence surface from being collected
+- profile-directory conflict or other mutual-exclusion limits between browser families
+
+Treat these as the core method families, not as a promise that every installation has every helper:
+
+- Chrome baseline: `navigate_page` or `new_page`, `list_network_requests`, `get_network_request`, `take_snapshot`, and `take_screenshot`
+- js-reverse runtime: `navigate_page` or `new_page`, `list_network_requests`, `get_request_initiator`, `list_scripts`, `search_in_sources`, `get_script_source`, `save_script_source`, `set_breakpoint_on_text`, `break_on_xhr`, `get_paused_info`, `evaluate_script`, `step`, `pause_or_resume`, and `remove_breakpoint`
+- optional cleanup or preload support: `close_page` and `navigate_page(initScript=...)`
+
+If a named optional method is missing, use the documented fallback and report the capability gap. Do not block the entire reverse when the same evidence can be obtained through supported methods.
+
+Refresh the capability snapshot after a tool-server restart or reconnect, registry or schema change, browser-mode or target-context change, control-channel disconnect, or a method result that contradicts the recorded snapshot. Stop target actions during refresh. Preserve already saved evidence, record the last explicitly confirmed lifecycle state plus the control loss, and do not infer `PARKED`, `CLOSED`, or restored ownership from reconnection alone. Re-enter through the same ownership and `sequential handoff` gates.
+
+## Browser lifecycle and handoff
+
+### Ownership invariant
+
+- At most one browser tool family may be `TARGET_ACTIVE` at a time.
+- Never place `chrome-devtools` and `js-reverse` target actions in the same parallel tool batch.
+- A schema, tool-list, or non-target health check may confirm availability without taking target ownership. Capability checks must not prewarm both target browsers.
+- A parked MCP server or browser process may remain alive. Process presence is not the same as target-active ownership.
+
+Use these lifecycle states:
+
+```text
+IDLE
+  -> CHROME_ACTIVE
+  -> CHROME_PARKED or RETAINED_EXCEPTION
+  -> JS_REVERSE_ACTIVE
+  -> JS_REVERSE_PARKED or MCP_PROCESS_ENDED
+```
+
+Use `CLOSED` only when the installed tool explicitly confirms browser or MCP-process termination. Never infer closure from a blank page, a missing tab, an idle tool call, or the end of one analysis phase.
+
+### Sequential handoff gate
+
+Before switching tool families:
+
+1. save the clean request and response pair, redirect chain, target URL, relevant page state, network identifiers, screenshots or snapshots, and every artifact needed by the next phase
+2. record whether the current session, verifier round, in-memory secret, manual interaction, or challenge state is replayable
+3. remove or disable invasive instrumentation when supported, and resume a paused runtime before parking it
+4. quiesce target activity as far as the installed tool allows
+5. record the resulting lifecycle state and only then grant `TARGET_ACTIVE` ownership to the next family
+
+Evidence roles can switch at this checkpoint. The role selected first does not own the investigation to completion; transfer the saved baseline, request identifiers, source coordinates, and state inventory to whichever role answers the next unresolved question.
+
+For `chrome-devtools`:
+
+- close every extra page that the installed tool permits
+- if the final page cannot be closed, navigate it to `about:blank` and mark Chrome `CHROME_PARKED`, not closed
+- do not use `taskkill`, process-wide termination, or profile deletion to simulate lifecycle support
+
+For `js-reverse`:
+
+- remove breakpoints and resume execution when those controls are available
+- navigate selectable pages away from the target when the installed tool permits it
+- if no page-close or browser-close operation exists, mark the family `JS_REVERSE_PARKED`; end with `MCP_PROCESS_ENDED` only when process termination is actually observed
+
+### Retained-state exception
+
+Use `RETAINED_EXCEPTION` when cleanup would destroy the only live session chain, one-time verifier round, in-memory key, manual verification result, or another artifact that is not yet reproducible.
+
+- preserve the state and record why it cannot be rebuilt yet
+- do not invoke the retained tool family while another family owns `TARGET_ACTIVE`
+- record autonomous background traffic or mutation if the retained page cannot be fully quiesced
+- do not compare retained-state traffic with a clean baseline as though they were equivalent
+- if the next phase requires the same session chain, postpone the switch until the chain can be transferred or replayed faithfully
+- clear the exception as soon as replayability is proven
+
+### Browser-mode routing
+
+- Obey the installed tool's configured mode. Do not claim runtime headless, headful, isolated-profile, or CloakBrowser switching unless the tool schema or server lifecycle actually exposes it.
+- If a headless-capable configuration exists, compare it against the clean Chrome baseline before trusting it for target evidence.
+- Fall back to a headful or stealth-capable configured mode when manual verification, visible interaction, headless detection, window state, Canvas, WebGL, font, layout, or renderer behavior is part of the protocol evidence.
+- Record the mode, the reason for changing it, and whether the change altered network or runtime behavior.
+- Treat a headless/headful mismatch as evidence. Do not hide it behind a global default.
+
 ## Static JS analysis
 
 - `list_scripts`: enumerate candidate bundles
@@ -50,11 +174,19 @@ Fallback recipes when you wanted a missing helper:
 - no automatic crypto detector: search helper names, compare fixed inputs, and route to `references/crypto-patterns.md`
 - no automatic deobfuscator: use `search_in_sources`, `save_script_source`, and `references/obfuscation-guide.md`
 
+Operational notes for saved sources:
+
+- if a file is one giant line, beautify or pretty-print a working copy before relying on line numbers
+- if `evaluate_script` or a similar tool writes through a JSON-serializing `filePath`, run `json.loads` on the saved text before treating it as raw JavaScript
+- prefer `save_script_source` or a direct `fetch` of the asset URL, then continue offline when live inspection is noisy
+- when string-table recovery is needed, route to `references/obfuscation-guide.md` and `references/offline-inline-deob-playbook.md` instead of inventing an automatic deobfuscator tool
+
+
 Keyword packs:
 
 - request path: `"/api/"`, `"graphql"`, `"fetch("`, `"axios"`, `"XMLHttpRequest"`
 - signer: `"sign"`, `"token"`, `"nonce"`, `"timestamp"`, `"trace"`, `"x-sign"`, `"beforeSend"`, `"ajaxSetup"`, `"requestId"`
-- crypto: `"md5"`, `"sha"`, `"hmac"`, `"aes"`, `"rsa"`, `"crypto.subtle"`
+- crypto: `"md5"`, `"sha"`, `"sm3"`, `"hmac"`, `"aes"`, `"rsa"`, `"crypto.subtle"`, `"native code"`
 - environment: `"navigator"`, `"canvas"`, `"webgl"`, `"performance"`, `"webdriver"`
 - probe chain: `"Object.keys"`, `"Reflect.ownKeys"`, `"getOwnPropertyDescriptor"`, `"toString"`, `"document.all"`, `"JSON.stringify"`
 
@@ -67,12 +199,14 @@ Start with a clean baseline. Then use initiator stacks and request diffs. Add ru
 1. capture one clean request and response pair
 2. use `get_request_initiator` to jump from the request to the caller stack
 3. use `search_in_sources` and `get_script_source` to inspect the smallest relevant code region
-4. use `trace_function` when a named helper is stable enough to trace without poisoning the target
+4. use `set_breakpoint_on_text`, `get_paused_info`, `evaluate_script(frameIndex=...)`, and `step(direction='over'|'into'|'out')` when a named helper is stable enough to trace without poisoning the target
 5. use `break_on_xhr` when you need to stop at the exact request boundary
-6. use `inject_before_load` only for narrow boundary hooks that you can justify
-7. when hooking, log target, event, method, URL, field, or caller so captured values stay attributable to one request boundary
+6. when a justified before-load observation is required, use Chrome `navigate_page(initScript=...)` during the Chrome phase only when the capability snapshot confirms it; otherwise use the earliest stable breakpoint, a controlled refresh after preserving the baseline, or an offline local runtime instead of inventing an unsupported tool call
+7. when hooking, log target, event, method, URL, field, caller, decisive method arguments, or returned child-object shapes so captured values stay attributable to one request boundary
 8. if a hook stays quiet, treat that as evidence only about that exact boundary and rule out sibling writers or alternate transport channels before concluding the field is absent
 9. if the target is verifier-gated or behavior-sensitive, remove invasive instrumentation and recapture a clean baseline the moment behavior changes
+
+Use the compact preload, initialized-page, hook-miss, page-owned-world, sibling-transport, and disconnect recovery matrix in `references/hook-techniques.md` before widening instrumentation.
 
 ### Breakpoint tools
 
@@ -87,7 +221,7 @@ Start with a clean baseline. Then use initiator stacks and request diffs. Add ru
 - `evaluate_script`: inspect `document.cookie`, storage values, bootstrap globals, or runtime helper outputs
 - `evaluate_script(mainWorld=true)`: inspect page-owned globals such as webpack caches, SDK objects, or exposed bootstrap helpers
 - if a console or isolated-world probe misses a page-owned wrapper, constructor, or global, repeat the proof in the page-owned world before discarding that path
-- `inject_before_load`: patch or observe a narrow environment branch before the page script runs
+- `navigate_page(initScript=...)`: patch or observe a narrow pre-load boundary during the Chrome phase when the installed Chrome tool exposes it
 - `save_script_source`: preserve suspicious bundles for offline diffing when environment mismatch remains unclear
 
 ## Embedded runtime routing
@@ -111,6 +245,22 @@ Start with a clean baseline. Then use initiator stacks and request diffs. Add ru
 - response gibberish: search for decrypt path, compression, protobuf, or msgpack
 - local runtime timers fail after init but one getter or outgoing request boundary is visible: route to `references/challenge-artifact-harvest-playbook.md` before patching more DOM
 - hooked page fails but clean page works: suspect observer effect, remove invasive hooks, and recapture the baseline before deeper tracing
+
+- one browser family fails to start because the other already holds the user-data directory: keep a single `TARGET_ACTIVE` family for wire evidence, mark the blocked family in the capability snapshot, and continue static recovery offline with saved sources plus local Node or Python
+- saved JS from an evaluate-style file export looks quoted or escaped end to end: decode the JSON string before analysis
+- a named national or textbook digest still mismatches fixed samples: route to `references/crypto-patterns.md` and diff IV, constants, packing, and compress masks instead of trusting the algorithm name
+
+
+
+## Focused profile tools
+
+When the goal is already narrow, prefer the internal profiles before reopening full target discovery:
+
+- paste-ready observation only: `references/profiles/browser-hook-snippets/index.md` and its `scripts/*.js`
+- known entry needs Node/VM host surfaces: `references/profiles/env-patch/index.md` and `references/profiles/env-patch/scripts/env-diagnose.js`
+- fixed-trace pure Python rebuild: `references/pure-python-rebuild-playbook.md`
+
+These routes complement `chrome-devtools` and `js-reverse`. They do not replace wire evidence for unknown multi-layer collectors.
 
 ## Local helper scripts
 

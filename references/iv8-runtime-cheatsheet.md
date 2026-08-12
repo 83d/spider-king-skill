@@ -50,6 +50,14 @@ Start with the smallest environment that proves the branch you care about:
 
 Do not cargo-cult hundreds of fingerprint fields before the probe chain proves they matter.
 
+If high-entropy host inputs are required, capture them on the execution host.
+Canvas, WebGL, computed style, system colors, screen metrics, device memory,
+hardware concurrency, fonts, audio, and similar profile fields are provenance
+artifacts, not portable constants. A cache from another machine or browser
+profile may be useful as a comparison fixture, but it is not a valid runtime
+input unless the final collector is explicitly classified as snapshot-driven
+and the capture scope is reported.
+
 Useful `iv8` primitives from the tutorial:
 
 - `JSContext(environment=..., config=..., time_mode=...)`
@@ -135,6 +143,8 @@ Common examples from the tutorial that generalize well:
 - `PerformanceObserver.supportedEntryTypes`
 - specific `document.createElement` branches
 
+Before replacing `btoa` in an embedded host, test the Latin1 vector `btoa("\x00\xffAz") === "AP9Beg=="`; code units above `0xff` must be rejected rather than UTF-8 encoded. Keep the host implementation when it passes. Patch only after a fixed positive or rejection vector proves a mismatch.
+
 Rule:
 
 - patch the exact missing surface
@@ -194,6 +204,7 @@ Record these artifacts:
 ## Common traps
 
 - overfilling environment fingerprints before proving the missing branch
+- reusing another host's canvas, WebGL, system color, font, or device-profile cache as live runtime input
 - using `page.load` when static DOM parsing would do
 - reacquiring linked bootstrap assets under a fresh client or guessed origin instead of the same session chain that discovered them
 - replaying full async bootstrap when injected issued state already unblocks the runtime
