@@ -127,10 +127,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          upstream_sha="${{ needs.validate-upstream.outputs.upstream_sha }}"
+          [[ "${upstream_sha}" =~ ^[0-9a-f]{40}$ ]]
           git add --all
           git -c core.whitespace=cr-at-eol diff --cached --check -- .github
           git -c core.whitespace=cr-at-eol diff --cached --check \
-            "${{ needs.validate-upstream.outputs.upstream_sha }}" -- \
+            "${upstream_sha}" -- \
             README.md \
             SKILL.md \
             references/anti-patterns-playbook.md \
@@ -139,19 +141,50 @@ jobs:
             references/profiles/static-ast/index.md \
             scripts/forward_test_report.py \
             scripts/validate_skill.py
+
+          candidate_changed=true
           if git diff --cached --quiet; then
+            candidate_changed=false
+          fi
+          upstream_linked=false
+          if git merge-base --is-ancestor "${upstream_sha}" HEAD; then
+            upstream_linked=true
+          fi
+
+          if [[ "${candidate_changed}" == "false" && "${upstream_linked}" == "true" ]]; then
             echo "mode=unchanged" >> "${GITHUB_OUTPUT}"
-            echo "Already synchronized with upstream."
+            echo "history=already-linked" >> "${GITHUB_OUTPUT}"
+            echo "Content and Git ancestry are already synchronized with upstream."
             exit 0
           fi
 
-          upstream_sha="${{ needs.validate-upstream.outputs.upstream_sha }}"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "Sync upstream ${upstream_sha:0:12}"
+
+          if [[ "${upstream_linked}" == "false" ]]; then
+            fork_parent="$(git rev-parse --verify 'HEAD^{commit}')"
+            candidate_tree="$(git write-tree)"
+            merge_commit="$(
+              printf 'Sync upstream %s and link upstream history\n' "${upstream_sha:0:12}" |
+                git commit-tree "${candidate_tree}" \
+                  -p "${fork_parent}" \
+                  -p "${upstream_sha}"
+            )"
+            git reset --hard "${merge_commit}"
+            publish_mode="history-bridge"
+            history_mode="linked"
+            test "$(git rev-parse HEAD^1)" = "${fork_parent}"
+            test "$(git rev-parse HEAD^2)" = "${upstream_sha}"
+            git merge-base --is-ancestor "${upstream_sha}" HEAD
+          else
+            git commit -m "Refresh upstream overlay ${upstream_sha:0:12}"
+            publish_mode="content-refresh"
+            history_mode="already-linked"
+          fi
 
           if git push origin HEAD:main; then
-            echo "mode=direct" >> "${GITHUB_OUTPUT}"
+            echo "mode=direct-${publish_mode}" >> "${GITHUB_OUTPUT}"
+            echo "history=${history_mode}" >> "${GITHUB_OUTPUT}"
             exit 0
           fi
 
@@ -163,11 +196,12 @@ jobs:
               --base main \
               --head "${sync_branch}" \
               --title "Sync upstream ${upstream_sha:0:12}" \
-              --body "Automated upstream sync passed the fork overlay and regression gates. Direct push was unavailable, so this PR preserves branch-protection review.")"
+              --body "Automated upstream sync passed the fork overlay and regression gates. Direct push was unavailable. Merge this PR with a merge commit; squash or rebase would discard the recorded upstream-parent relationship.")"
             pr_number="${pr_url##*/}"
           fi
-          gh pr merge "${pr_number}" --auto --squash || true
+          gh pr merge "${pr_number}" --auto --merge || true
           echo "mode=pull-request" >> "${GITHUB_OUTPUT}"
+          echo "history=${history_mode}" >> "${GITHUB_OUTPUT}"
           echo "pull_request=${pr_number}" >> "${GITHUB_OUTPUT}"
 
       - name: Write the run summary
@@ -178,6 +212,7 @@ jobs:
             echo
             echo "- Upstream: \`${UPSTREAM_REPOSITORY}@${{ needs.validate-upstream.outputs.upstream_sha }}\`"
             echo "- Result: \`${{ steps.publish.outputs.mode }}\`"
+            echo "- Upstream ancestry: \`${{ steps.publish.outputs.history }}\`"
             if [[ -n "${{ steps.publish.outputs.pull_request }}" ]]; then
               echo "- Pull request: #${{ steps.publish.outputs.pull_request }}"
             fi
